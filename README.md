@@ -1,4 +1,4 @@
-# 🤖 AI Resume Builder
+#  AI Resume Builder
 
 An intuitive web application that leverages Artificial Intelligence to help users craft professional, ATS-friendly resumes in minutes. Users input their basic details and career goals, and the AI generates tailored professional summaries, work experience descriptions, and skill alignments.
 
