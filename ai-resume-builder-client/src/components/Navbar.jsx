@@ -47,6 +47,21 @@ const Navbar = () => {
             Logout
           </button>
         </div>
+
+        <div className="flex md:hidden items-center gap-3">
+          <Link
+            to="/"
+            className="text-sm font-medium text-slate-700 hover:text-[#9400D3] transition-colors"
+          >
+            Home
+          </Link>
+          <button
+            onClick={logoutUser}
+            className="rounded-full border border-[#9400D3]/30 bg-[#9400D3]/10 px-4 py-2 text-sm font-medium text-[#4c0fa3] hover:bg-[#9400D3]/15 active:scale-95 transition-all"
+          >
+            Logout
+          </button>
+        </div>
       </nav>
     </div>
   );
