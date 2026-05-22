@@ -3,7 +3,7 @@ import React from "react";
 import { dummyResumeData } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import pdfToText from 'react-pdfToText'
+import pdfToText from 'react-pdftotext'
 import { toast } from "react-hot-toast";
 import api from "../configs/api.js";
 import { useSelector } from "react-redux";
