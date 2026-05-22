@@ -1,0 +1,1 @@
+please update my featues section (Features.jsx) so it carries relevant information about our application. make it look professional. also enhance the footer.
