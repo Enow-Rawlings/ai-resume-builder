@@ -1,1 +1,4 @@
 please update my featues section (Features.jsx) so it carries relevant information about our application. make it look professional. also enhance the footer.
+
+
+https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/features/card-image-1.png

@@ -3,10 +3,31 @@ import React from "react";
 import { dummyResumeData } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import pdfToText from 'react-pdftotext'
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
 import { toast } from "react-hot-toast";
 import api from "../configs/api.js";
 import { useSelector } from "react-redux";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+const extractTextFromPdf = async (file) => {
+  if (!file) return '';
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+  let text = '';
+
+  for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex++) {
+    const page = await pdf.getPage(pageIndex);
+    const content = await page.getTextContent();
+    const pageText = content.items.map((item) => item.str).join(' ');
+    text += pageText + '\n';
+  }
+
+  return text.trim();
+};
+
 const Dashboard = () => {
   const colors = [
     "#933ea0",
@@ -24,6 +45,8 @@ const Dashboard = () => {
   const [title, setTitle] = useState('')
   const [resume, setResume] = useState(null)
   const [editResumeId, setEditResumeId] = useState('')
+  const [testimonial, setTestimonial] = useState('')
+  const [testimonialSaved, setTestimonialSaved] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)
 
@@ -60,7 +83,7 @@ const Dashboard = () => {
     event.preventDefault()
    setIsLoading(true)
    try {
-    const resumeText = await pdfToText(resume)
+    const resumeText = await extractTextFromPdf(resume)
     const {data} = await api.post('/api/ai/upload-resume', {title, resumeText}, {headers: {Authorization: token}})
     // setAllResumes([...allResumes, data.resume])
     setTitle('')
@@ -71,6 +94,28 @@ const Dashboard = () => {
     toast.error(error?.response?.data?.message || error.message)
    } 
     setIsLoading(false)
+  }
+
+  const saveTestimonial = (event) => {
+    event.preventDefault()
+    if (!testimonial.trim()) {
+      toast.error('Please enter a short testimonial before submitting.')
+      return
+    }
+
+    const savedTestimonials = JSON.parse(localStorage.getItem('cvpilot_testimonials') || '[]')
+    const newTestimonial = {
+      id: Date.now(),
+      name: user?.name || 'Anonymous',
+      handle: `@${(user?.name || 'anonymous').replace(/\s+/g, '').toLowerCase()}`,
+      message: testimonial.trim(),
+      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Anonymous')}&background=9400D3&color=ffffff&rounded=true`,
+    }
+
+    localStorage.setItem('cvpilot_testimonials', JSON.stringify([newTestimonial, ...savedTestimonials].slice(0, 12)))
+    setTestimonial('')
+    setTestimonialSaved(true)
+    setTimeout(() => setTestimonialSaved(false), 3000)
   }
 
   const editTitle = async (event)=>{
@@ -108,7 +153,7 @@ const Dashboard = () => {
     <div>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <p className="text-2xl font-medium mb-6 bg-linear-to-r from-slate-600 to-slate-700 bg-clip-text text-transparent sm:hidden">
-          Welcome, Enow Rawlings
+          Welcome, {user?.name || 'User'}
         </p>
 
         <div className="flex gap-4">
@@ -166,6 +211,31 @@ const Dashboard = () => {
           })}
         </div>
 
+        <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-slate-900 mb-3">Share your experience</h2>
+          <p className="text-sm text-slate-500 mb-5">
+            Submit a short testimonial and help us keep the homepage authentic with real user feedback.
+          </p>
+          <form onSubmit={saveTestimonial} className="space-y-4">
+            <textarea
+              value={testimonial}
+              onChange={(e) => setTestimonial(e.target.value)}
+              placeholder="Write your honest testimonial here..."
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-800 outline-none focus:border-[#9400D3] focus:ring-2 focus:ring-[#9400D31a]"
+              rows={4}
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full bg-[#9400D3] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-purple-700"
+            >
+              Submit testimonial
+            </button>
+            {testimonialSaved && (
+              <p className="text-sm text-green-600">Thanks! Your testimonial will appear on the home page.</p>
+            )}
+          </form>
+        </div>
+
           {showCreateResume && (
             <form onSubmit={createResume} onClick={()=> setShowCreateResume(false)} className="fixed inset-0 bg-black/70 backdroop-blur bg-opacity-50 z-10 flex items-center justify-center">
               <div onClick={e => e.stopPropagation()} className="relative bg-slate-50 border shadow-md rounded-lg w-full max-w-sm p-6">
@@ -182,7 +252,7 @@ const Dashboard = () => {
 
           }
           {showUploadResume && (
-            <form onSubmit={uploadResume} onClick={()=> setShowuploadResume(false)} className="fixed inset-0 bg-black/70 backdroop-blur bg-opacity-50 z-10 flex items-center justify-center">
+            <form onSubmit={uploadResume} onClick={()=> setShowUploadResume(false)} className="fixed inset-0 bg-black/70 backdroop-blur bg-opacity-50 z-10 flex items-center justify-center">
               <div onClick={e => e.stopPropagation()} className="relative bg-slate-50 border shadow-md rounded-lg w-full max-w-sm p-6">
                 <h2 className="text-xl font-bold mb-4">Upload Resume</h2>
                 <input onChange={(e)=>{setTitle(e.target.value)}} value={title}type="text" placeholder="Enter Resume Title" className="w-full px-4 py-2 mb-4 focus:border-greem-600 ring-green-600" required/>

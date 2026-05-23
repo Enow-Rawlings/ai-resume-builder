@@ -22,7 +22,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await api.post(`api/users/${state}`, formData)
+      const { data } = await api.post(`/api/users/${state}`, formData)
       if (data.token) {
         localStorage.setItem("token", data.token);
         dispatch(login(data));

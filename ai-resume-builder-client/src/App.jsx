@@ -87,7 +87,7 @@ const App = () => {
 
     try {
       dispatch(setLoading(true))
-      const { data } = await api.get('api/users/data', {
+      const { data } = await api.get('/api/users/data', {
         headers: {
           Authorization: token
         }
