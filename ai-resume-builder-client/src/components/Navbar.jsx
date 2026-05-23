@@ -13,6 +13,10 @@ const Navbar = () => {
     dispatch(logout());
   };
 
+  const colors = [
+    "#9400D3",
+    "#0860c4"
+  ]
   return (
     <div className="shadow-sm border-b border-[#9400D3]/10 bg-white/95 backdrop-blur-sm">
       <nav className="flex items-center justify-between max-w-7xl mx-auto w-full px-4 py-4 text-slate-900 transition-all">
