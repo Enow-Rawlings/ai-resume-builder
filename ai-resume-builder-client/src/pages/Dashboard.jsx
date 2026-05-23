@@ -96,26 +96,36 @@ const Dashboard = () => {
     setIsLoading(false)
   }
 
-  const saveTestimonial = (event) => {
+  const saveTestimonial = async (event) => {
     event.preventDefault()
+
     if (!testimonial.trim()) {
       toast.error('Please enter a short testimonial before submitting.')
       return
     }
 
-    const savedTestimonials = JSON.parse(localStorage.getItem('cvpilot_testimonials') || '[]')
+    if (!token) {
+      toast.error('Please sign in to submit a testimonial.')
+      return
+    }
+
     const newTestimonial = {
-      id: Date.now(),
       name: user?.name || 'Anonymous',
       handle: `@${(user?.name || 'anonymous').replace(/\s+/g, '').toLowerCase()}`,
       message: testimonial.trim(),
       image: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Anonymous')}&background=9400D3&color=ffffff&rounded=true`,
     }
 
-    localStorage.setItem('cvpilot_testimonials', JSON.stringify([newTestimonial, ...savedTestimonials].slice(0, 12)))
-    setTestimonial('')
-    setTestimonialSaved(true)
-    setTimeout(() => setTestimonialSaved(false), 3000)
+    try {
+      await api.post('/api/testimonials', newTestimonial, {
+        headers: { Authorization: token },
+      })
+      setTestimonial('')
+      setTestimonialSaved(true)
+      setTimeout(() => setTestimonialSaved(false), 3000)
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message)
+    }
   }
 
   const editTitle = async (event)=>{

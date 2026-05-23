@@ -1,6 +1,7 @@
 import { BookUserIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Title from "./Title";
+import api from "../../configs/api.js";
 
 const defaultTestimonials = [
   {
@@ -39,55 +40,72 @@ const defaultTestimonials = [
 
 const Testimonial = () => {
   const [cardsData, setCardsData] = useState(defaultTestimonials);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("cvpilot_testimonials");
-    if (stored) {
+    const fetchTestimonials = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setCardsData(parsed);
+        const { data } = await api.get('/api/testimonials')
+        if (Array.isArray(data.testimonials) && data.testimonials.length > 0) {
+          setCardsData(data.testimonials)
         }
       } catch (error) {
-        console.warn("Invalid testimonials data in localStorage", error);
+        console.warn('Failed to load testimonials', error)
       }
     }
+
+    fetchTestimonials()
   }, []);
 
+  const truncateMessage = (message, maxLength = 170) => {
+    if (!message) return ''
+    return message.length > maxLength ? `${message.slice(0, maxLength)}...` : message
+  }
 
-  const CreateCard = ({ card }) => (
-    <div className="p-4 rounded-lg mx-4 shadow hover:shadow-lg transition-all duration-200 w-72 flex-none">
-      <div className="flex gap-2">
-        <img
-          className="h-11 w-11 rounded-full object-cover"
-          src={card.image}
-          alt="User Image"
-        />
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1">
-            <p>{card.name}</p>
-            <svg
-              className="mt-0.5 fill-blue-500"
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M4.555.72a4 4 0 0 1-.297.24c-.179.12-.38.202-.59.244a4 4 0 0 1-.38.041c-.48.039-.721.058-.922.129a1.63 1.63 0 0 0-.992.992c-.071.2-.09.441-.129.922a4 4 0 0 1-.041.38 1.6 1.6 0 0 1-.245.59 3 3 0 0 1-.239.297c-.313.368-.47.551-.56.743-.213.444-.213.96 0 1.404.09.192.247.375.56.743.125.146.187.219.24.297.12.179.202.38.244.59.018.093.026.189.041.38.039.48.058.721.129.922.163.464.528.829.992.992.2.071.441.09.922.129.191.015.287.023.38.041.21.042.411.125.59.245.078.052.151.114.297.239.368.313.551.47.743.56.444.213.96.213 1.404 0 .192-.09.375-.247.743-.56.146-.125.219-.187.297-.24.179-.12.38-.202.59-.244a4 4 0 0 1 .38-.041c.48-.039.721-.058.922-.129.464-.163.829-.528.992-.992.071-.2.09-.441.129-.922a4 4 0 0 1 .041-.38c.042-.21.125-.411.245-.59.052-.078.114-.151.239-.297.313-.368.47-.551.56-.743.213-.444.213-.96 0-1.404-.09-.192-.247-.375-.56-.743a4 4 0 0 1-.24-.297 1.6 1.6 0 0 1-.244-.59 3 3 0 0 1-.041-.38c-.039-.48-.058-.721-.129-.922a1.63 1.63 0 0 0-.992-.992c-.2-.071-.441-.09-.922-.129a4 4 0 0 1-.38-.041 1.6 1.6 0 0 1-.59-.245A3 3 0 0 1 7.445.72C7.077.407 6.894.25 6.702.16a1.63 1.63 0 0 0-1.404 0c-.192.09-.375.247-.743.56m4.07 3.998a.488.488 0 0 0-.691-.69l-2.91 2.91-.958-.957a.488.488 0 0 0-.69.69l1.302 1.302c.19.191.5.191.69 0z"
-              />
-            </svg>
+  const selectTestimonial = (id) => {
+    setSelectedId((prev) => (prev === id ? null : id))
+  }
+
+  const CreateCard = ({ card }) => {
+    const testimonialId = card._id ?? card.id
+    const isSelected = selectedId === testimonialId
+    const displayedMessage = isSelected ? card.message : truncateMessage(card.message)
+
+    return (
+      <button
+        type="button"
+        onClick={() => selectTestimonial(testimonialId)}
+        className={`group text-left rounded-3xl border p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#9400D3]/40 ${
+          isSelected ? 'border-[#9400D3] bg-[#F5F0FF]' : 'border-slate-200 bg-white'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <img
+            className="h-14 w-14 rounded-full object-cover"
+            src={card.image}
+            alt={`${card.name} profile`}
+          />
+          <div>
+            <p className="font-semibold text-slate-900">{card.name}</p>
+            <p className="text-xs text-slate-500">{card.handle}</p>
           </div>
-          <span className="text-xs text-slate-500">{card.handle}</span>
         </div>
-      </div>
-      <p className="text-sm py-4 text-gray-800">
-        {card.message}
-      </p>
-    </div>
-  );
+        <p className="mt-5 text-sm leading-relaxed text-slate-700">
+          {displayedMessage}
+        </p>
+        {!isSelected && card.message.length > 170 && (
+          <span className="mt-4 inline-block text-sm font-medium text-[#9400D3]">
+            Read more
+          </span>
+        )}
+        {isSelected && (
+          <span className="mt-4 inline-block text-sm text-slate-500">
+            Tap again to collapse.
+          </span>
+        )}
+      </button>
+    )
+  }
 
   return (
     <div
@@ -103,40 +121,36 @@ const Testimonial = () => {
         description="Our streamlined process makes it easy to create a professional resume in just a few steps with intelligent AI-powered tools and features."
       />
 
-       <style>{`
-            @keyframes marqueeScroll {
-                0% { transform: translateX(0%); }
-                100% { transform: translateX(-50%); }
-            }
-
-            .marquee-inner {
-                animation: marqueeScroll 25s linear infinite;
-            }
-
-            .marquee-reverse {
-                animation-direction: reverse;
-            }
-        `}</style>
-
-      <div className="marquee-row w-full mx-auto max-w-5xl overflow-hidden relative">
-        <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none bg-linear-to-r from-white to-transparent"></div>
-        <div className="marquee-inner flex transform-gpu min-w-[200%] will-change-transform pt-10 pb-5">
-          {[...cardsData, ...cardsData].map((card, index) => (
-            <CreateCard key={index} card={card} />
-          ))}
-        </div>
-        <div className="absolute right-0 top-0 h-full w-20 md:w-40 z-10 pointer-events-none bg-linear-to-l from-white to-transparent"></div>
+      <div className="grid w-full gap-6 max-w-6xl pt-10 sm:grid-cols-2 xl:grid-cols-3">
+        {cardsData.map((card) => (
+          <CreateCard key={card._id ?? card.id} card={card} />
+        ))}
       </div>
 
-      <div className="marquee-row w-full mx-auto max-w-5xl overflow-hidden relative">
-        <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none bg-linear-to-r from-white to-transparent"></div>
-        <div className="marquee-inner marquee-reverse flex transform-gpu min-w-[200%] pt-10 pb-5">
-          {[...cardsData, ...cardsData].map((card, index) => (
-            <CreateCard key={index} card={card} />
-          ))}
+      {selectedId && (
+        <div className="mt-10 w-full max-w-6xl rounded-3xl border border-[#9400D3]/20 bg-[#F8F5FF] p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#9400D3]">Featured testimonial</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">
+                {cardsData.find((card) => selectedId === (card._id ?? card.id))?.name}
+              </p>
+              <p className="text-sm text-slate-500">
+                {cardsData.find((card) => selectedId === (card._id ?? card.id))?.handle}
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+              {new Date(
+                cardsData.find((card) => selectedId === (card._id ?? card.id))?.createdAt || Date.now()
+              ).toLocaleDateString()}
+            </span>
+          </div>
+
+          <p className="mt-6 text-slate-700 leading-relaxed">
+            {cardsData.find((card) => selectedId === (card._id ?? card.id))?.message}
+          </p>
         </div>
-        <div className="absolute right-0 top-0 h-full w-20 md:w-40 z-10 pointer-events-none bg-linear-to-l from-white to-transparent"></div>
-      </div>
+      )}
     </div>
   );
 };
