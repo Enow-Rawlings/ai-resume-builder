@@ -69,6 +69,7 @@ import Dashboard from './pages/Dashboard'
 import ResumeBuilder from './pages/ResumeBuilder'
 import Preview from './pages/Preview'
 import Contact from './pages/Contact'
+import Testimonials from './pages/Testimonials'
 import { login, setLoading } from './app/features/authSlice'
 import { Toaster } from 'react-hot-toast'
 import { useDispatch } from 'react-redux'
@@ -117,6 +118,7 @@ const App = () => {
           <Route path='builder/:resumeId' element={<ResumeBuilder />}/>
         </Route>
         <Route path='contact' element={<Contact />}/>
+        <Route path='testimonials' element={<Testimonials />}/>
         <Route path='view/:resumeId' element={<Preview />}/>
       </Routes>
     </>

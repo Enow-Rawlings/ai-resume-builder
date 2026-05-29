@@ -228,9 +228,10 @@ const Hero = () => {
     },
   ];
 
+ 
   return (
     <div>
-      <div className="relative pb-4 overflow-x-hidden bg-white">
+      <div className="relative pb-4 overflow-hidden bg-white">
         {/* Navbar */}
         <nav className="z-50 flex flex-wrap items-center justify-between w-full gap-3 py-4 px-4 text-sm text-white sm:px-6 md:px-10 lg:px-14 xl:px-20 bg-[#9400D3] shadow-lg shadow-[#9400D3]/20">
           <Link to="/" className="flex items-center gap-3">
