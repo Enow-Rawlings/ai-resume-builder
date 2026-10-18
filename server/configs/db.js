@@ -18,10 +18,7 @@ const connectDB = async () => {
         const hasDatabase = /\/[^\/?]+(?=(\?|$))/.test(mongodbURI.replace(/\/+$/, ""));
         const connectionString = hasDatabase ? mongodbURI : `${mongodbURI}/${projectName}`;
 
-        await mongoose.connect(connectionString, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        await mongoose.connect(connectionString);
     } catch (error) {
         console.error("Error connecting to MongoDB:", error)
         process.exit(1)
