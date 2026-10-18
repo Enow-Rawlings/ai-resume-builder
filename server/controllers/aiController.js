@@ -236,22 +236,31 @@ import ai from "../configs/ai.js"
 const getAiModel = () => process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const makePrompt = ({type}) => {
-  const base = "you are an expert in resume writing and enhancement."
+  const base = "You are an expert resume writer. Return ONLY the enhanced text with no headings, labels, introductory phrases, or markdown formatting. Do not say 'Here is the enhanced...' or include any prefix. Output the content directly."
   const instructions = {
-    summary: "You will be given a professional summary from a resume and your task is to enhance it by making it more concise, impactful, and tailored to the job description. Use action verbs, quantify achievements where possible, and focus on the most relevant skills and experiences. The enhanced professional summary should be no more than 1-2 sentences long.",
-    job: "You will be given a job description from a resume and your task is to enhance it by making it more concise, impactful, and tailored to the job description. Use action verbs, quantify achievements where possible, and focus on the most relevant skills and experiences. The enhanced job description should be no more than 3-5 bullet points long.",
-    resume: "You will be given a resume in JSON format and your task is to enhance it by making it more concise, impactful, and tailored to the job description. Use action verbs, quantify achievements where possible, and focus on the most relevant skills and experiences. The enhanced resume should be in JSON format and follow the same structure as the input resume."
+    summary: "Enhance the professional summary provided. Make it concise (2-3 sentences), impactful, and achievement-focused. Use strong action verbs. Return only the summary text.",
+    job: "Enhance the job description provided. Use strong action verbs, quantify achievements where possible, and keep it to 3-5 bullet points. Return only the bullet points with no heading.",
+    resume: "Extract structured data from the resume text provided and return it as valid JSON matching the schema. No extra text outside the JSON."
   }
-  return `${base} ${instructions[type] || instructions.summary}`;
+  return `${base}\n\n${instructions[type] || instructions.summary}`;
 }
 
 const cleanAiText = (text) => {
   if (!text) return "";
   return text
+    // Strip code fences
     .replace(/```json/ig, '')
     .replace(/```markdown/ig, '')
     .replace(/```text/ig, '')
     .replace(/```/g, '')
+    // Strip common AI heading patterns the model prepends
+    .replace(/^#+\s.*$/gm, '')                                             // # Markdown headings
+    .replace(/^\*{1,2}[^*\n]+\*{1,2}:?\s*$/gm, '')                       // **Bold label:** lines
+    .replace(/^Enhanced\s+[\w\s]+:?\s*/i, '')                             // "Enhanced Professional Summary:"
+    .replace(/^Here(?:'s| is)(?: the| an?)? enhanced[\w\s]*:?\s*/i, '')  // "Here is the enhanced..."
+    .replace(/^(?:Sure|Certainly|Of course)[!,.]?\s*/i, '')               // Filler openers
+    .replace(/^\n+/, '')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
