@@ -62,19 +62,23 @@
 
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Layout from './pages/Layout'
 import Dashboard from './pages/Dashboard'
 import ResumeBuilder from './pages/ResumeBuilder'
+import ResetPassword from './pages/ResetPassword'
 import Preview from './pages/Preview'
 import Contact from './pages/Contact'
 import Testimonials from './pages/Testimonials'
-import { login, setLoading } from './app/features/authSlice'
+import { login, logout, setLoading } from './app/features/authSlice'
 import { Toaster } from 'react-hot-toast'
 import { useDispatch } from 'react-redux'
 import { useEffect } from 'react'
 import api from './configs/api.js'
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const App = () => {
   const dispatch = useDispatch()
@@ -90,7 +94,7 @@ const App = () => {
       dispatch(setLoading(true))
       const { data } = await api.get('/api/users/data', {
         headers: {
-          Authorization: token
+          Authorization: `Bearer ${token}`
         }
       })
 
@@ -98,6 +102,11 @@ const App = () => {
         dispatch(login({ token, user: data.user }))
       }
     } catch (error) {
+      const status = error?.response?.status
+      if (status === 401) {
+        localStorage.removeItem('token')
+        dispatch(logout())
+      }
       console.log(error.message)
     } finally {
       dispatch(setLoading(false))
@@ -109,19 +118,21 @@ const App = () => {
   }, [])
 
   return (
-    <>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Toaster />
       <Routes>
         <Route path='/' element={<Home />} />
+        <Route path='login' element={<Login />} />
         <Route path='app' element={<Layout />}>
           <Route index element={<Dashboard />}/>
           <Route path='builder/:resumeId' element={<ResumeBuilder />}/>
         </Route>
         <Route path='contact' element={<Contact />}/>
         <Route path='testimonials' element={<Testimonials />}/>
+        <Route path='reset-password/:token' element={<ResetPassword />}/>
         <Route path='view/:resumeId' element={<Preview />}/>
       </Routes>
-    </>
+    </GoogleOAuthProvider>
   )
 }
 

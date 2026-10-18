@@ -72,6 +72,9 @@ import ClassicTemplate from './templates/ClassicTemplate'
 import ModernTemplate from './templates/ModernTemplate'
 import MinimalTemplate from './templates/MinimalTemplate'
 import MinimalImageTemplate from './templates/MinimalImageTemplate'
+import ExecutiveTemplate from './templates/ExecutiveTemplate'
+import TechTemplate from './templates/TechTemplate'
+import CreativeTemplate from './templates/CreativeTemplate'
 
 const ResumePreview = ({data, template, accentColor, classes = ""}) =>{
 
@@ -83,7 +86,12 @@ const ResumePreview = ({data, template, accentColor, classes = ""}) =>{
                 return <MinimalTemplate data={data} accentColor={accentColor}/>
             case 'minimal-image':
                 return <MinimalImageTemplate data={data} accentColor={accentColor}/>
-
+            case 'executive':
+                return <ExecutiveTemplate data={data} accentColor={accentColor}/>
+            case 'tech':
+                return <TechTemplate data={data} accentColor={accentColor}/>
+            case 'creative':
+                return <CreativeTemplate data={data} accentColor={accentColor}/>
             default: 
                 return <ClassicTemplate data={data} accentColor={accentColor}/>
         }

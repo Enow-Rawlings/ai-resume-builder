@@ -71,22 +71,37 @@ const TemplateSelector = ({ selectedTemplate, onChange }) =>{
         {
             id: "classic",
             name: "Classic",
-            preview: "A clean, traditional resume format with clear sections and professional typography"
+            preview: "Clean, traditional format with centred header and clear sections. Great for corporate roles."
         },
         {
             id: "modern",
             name: "Modern",
-            preview: "Sleek design with strategic use of color and modern font choices"
+            preview: "Full-width coloured header band with light body. Bold and contemporary."
         },
         {
             id: "minimal-image",
             name: "Minimal Image",
-            preview: "Minimal design with a single image and clean typography"
+            preview: "Two-column layout with profile photo sidebar. Neat and image-forward."
         },
         {
             id: "minimal",
             name: "Minimal",
-            preview: "Ultra-clean design that puts your content front and center"
+            preview: "Ultra-clean single column. Content first, zero clutter."
+        },
+        {
+            id: "executive",
+            name: "Executive",
+            preview: "Accent sidebar with initials avatar, main body right. Polished and senior."
+        },
+        {
+            id: "tech",
+            name: "Tech",
+            preview: "Dark header, tech-stack pill badges, project cards. Built for developers."
+        },
+        {
+            id: "creative",
+            name: "Creative",
+            preview: "Bold accent bars, timeline experience, card projects. Stands out for creative roles."
         },
     ]
     return (

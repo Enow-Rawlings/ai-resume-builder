@@ -55,6 +55,7 @@ const ModernTemplate = ({ data, accentColor }) => {
 						</a>
 					)}
 				</div>
+				</div>
 			</header>
 
 			<div className="p-8">

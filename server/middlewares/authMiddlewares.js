@@ -2,17 +2,22 @@ import jwt from 'jsonwebtoken';
 
 const protect = async (req, res, next) => {
 
-    console.log("🔒 AUTH MIDDLEWARE HIT! Token received:", req.headers.authorization);
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization || ''
+    console.log("🔒 AUTH MIDDLEWARE HIT! Authorization header:", authHeader);
+
+    const token = authHeader.startsWith('Bearer ')
+        ? authHeader.split(' ')[1]
+        : authHeader
+
     if (!token) {
-        return res.status(401).json({ message: 'Unauthorized'})
+        return res.status(401).json({ message: 'Unauthorized' })
     }
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
         req.userId = decoded.userId
-        next();
+        next()
     } catch (error) {
-        return res.status(401).json({message: error.message})
+        return res.status(401).json({ message: error.message })
     }
 }
 

@@ -10,17 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "@reduxjs/toolkit": "^2.12.0",
     "@tailwindcss/vite": "^4.2.4",
     "axios": "^1.16.1",
     "lucide-react": "^1.11.0",
+    "pdfjs-dist": "^4.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.14.2",
-    "tailwindcss": "^4.2.4",
-    "pdfjs-dist": "^4.0.0"
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

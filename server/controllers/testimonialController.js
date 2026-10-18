@@ -14,6 +14,7 @@ export const createTestimonial = async (req, res) => {
       handle: handle || '@anonymous',
       image: image || '',
       message: message.trim(),
+      isPublished: true,
     })
 
     res.status(201).json({ testimonial, message: 'Testimonial submitted successfully.' })
@@ -25,7 +26,7 @@ export const createTestimonial = async (req, res) => {
 
 export const getTestimonials = async (req, res) => {
   try {
-    const testimonials = await Testimonial.find({})
+    const testimonials = await Testimonial.find({ isPublished: true })
       .sort({ createdAt: -1 })
       .limit(12)
       .lean()

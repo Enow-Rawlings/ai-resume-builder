@@ -6,6 +6,7 @@ const TestimonialSchema = new mongoose.Schema({
   handle: { type: String, required: true },
   message: { type: String, required: true },
   image: { type: String, default: '' },
+  isPublished: { type: Boolean, default: false },
 }, { timestamps: true })
 
 const Testimonial = mongoose.model('Testimonial', TestimonialSchema)

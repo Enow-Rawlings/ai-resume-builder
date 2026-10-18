@@ -1,26 +1,56 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import useInView from "../../hooks/useInView";
 
 const CallToAction = () => {
-  return (
-    <section id="cta" className="mx-auto mt-12 mb-20 max-w-6xl px-6 sm:px-8 lg:px-10">
-      <div className="rounded-[2rem] bg-gradient-to-r from-[#9400D3] via-[#7b00c5] to-[#5f00b0] px-6 py-10 shadow-2xl shadow-[#9400D3]/30 ring-1 ring-[#D3D3FF]/20 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-8">
-        <div className="max-w-2xl text-center lg:text-left">
-          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#D3D3FF] opacity-90">Ready to get hired?</p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Build your resume faster with AI-crafted designs and instant exports.
-          </h2>
-          <p className="mt-4 max-w-xl text-base leading-7 text-[#F3E9FF]">
-            Start from a polished resume template, personalize your story, and download a resume that stands out in every applicant pool.
-          </p>
-        </div>
+  const [ref, visible] = useInView(0.1);
 
-        <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:mt-0 lg:items-start">
-          <a href="/app" className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3 text-sm font-semibold text-[#9400D3] transition hover:bg-[#D3D3FF]">
-            Start building
-          </a>
-          <a href="#features" className="inline-flex items-center justify-center rounded-full border border-[#D3D3FF]/30 bg-[#D3D3FF]/10 px-7 py-3 text-sm font-semibold text-[#F3E9FF] transition hover:border-white hover:bg-[#D3D3FF]/20 hover:text-[#14002d]">
-            Explore features
-          </a>
+  return (
+    <section
+      id="cta"
+      className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:px-10 lg:py-24"
+    >
+      <div
+        ref={ref}
+        className={`relative overflow-hidden rounded-[2rem] bg-[#9400D3] px-8 py-14 shadow-2xl shadow-[#9400D3]/30 sm:px-12 lg:px-16 fade-up ${visible ? "visible" : ""}`}
+      >
+        {/* Background decoration */}
+        <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/5 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-[#D3D3FF]/10 blur-2xl" />
+
+        <div className="relative flex flex-col items-center gap-8 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left">
+          {/* Copy */}
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#D3D3FF]/80">
+              Ready to get hired?
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+              Build your resume faster with{" "}
+              <span className="text-[#D3D3FF]">AI-crafted designs</span> and instant exports.
+            </h2>
+            <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/70 lg:text-base">
+              Start from a polished template, personalise your story, and download a resume
+              that stands out in every applicant pool.
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex shrink-0 flex-col items-center gap-3 sm:flex-row lg:flex-col lg:items-stretch xl:flex-row">
+            <Link
+              to="/app"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#9400D3] transition hover:bg-[#D3D3FF] active:scale-95"
+            >
+              Start building
+              <ArrowRight size={15} />
+            </Link>
+            <a
+              href="#features"
+              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-95"
+            >
+              Explore features
+            </a>
+          </div>
         </div>
       </div>
     </section>
