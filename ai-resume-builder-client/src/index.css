@@ -25,7 +25,31 @@ input:not([type="checkbox"]) {
   --color-secondary: #D3D3FF;
 }
 
-/* ── Scroll-reveal animations ─────────────────────────────────────── */
+/* ── Resume preview mobile scaling ────────────────────────────────── */
+/*
+  .scale-resume is applied to the #resume-preview wrapper.
+  On mobile the A4 template renders at ~794px natural width.
+  We use a CSS container-width trick: scale by (100vw / 794px) so it
+  always fills the available width without horizontal scroll.
+  On lg+ screens it renders normally.
+*/
+@media (max-width: 1023px) {
+  .scale-resume {
+    transform-origin: top left;
+    /* scale calculated dynamically via JS is not needed —
+       we clamp the outer container and let overflow-hidden clip */
+    width: 100% !important;
+  }
+
+  /* The actual A4 content inside templates uses max-w-4xl (896px).
+     Force it to shrink-to-fit inside the preview container. */
+  .scale-resume .max-w-4xl,
+  .scale-resume > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden;
+  }
+}
 .fade-up {
   opacity: 0;
   transform: translateY(28px);

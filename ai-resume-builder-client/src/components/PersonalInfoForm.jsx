@@ -1,81 +1,90 @@
-import { BriefcaseBusiness, Globe, Mail, MapPin, Phone, User } from 'lucide-react';
-import React from 'react';
+import { BriefcaseBusiness, Globe, Mail, MapPin, Phone, User } from 'lucide-react'
+import React from 'react'
 
-const PersonalInfoForm = ({data, onChange, removeBackground, setRemoveBackground}) => {
+const inputCls = "mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-colors text-sm bg-white"
 
-    const handleInputChange = (field, value) => {
-        onChange({...data, [field]: value})
-    }
+const fields = [
+  { key: "full_name",  label: "Full Name",        icon: User,            type: "text",  required: true },
+  { key: "email",      label: "Email Address",    icon: Mail,            type: "email", required: true },
+  { key: "phone",      label: "Phone Number",     icon: Phone,           type: "tel" },
+  { key: "location",   label: "Location",         icon: MapPin,          type: "text" },
+  { key: "profession", label: "Profession",       icon: BriefcaseBusiness, type: "text" },
+  { key: "linkedin",   label: "LinkedIn Profile", icon: Globe,           type: "url" },
+  { key: "website",    label: "Personal Website", icon: Globe,           type: "url" },
+]
 
-    const fields = [
-        {
-            key:"full_name", label: "Full Name", icon: User, type: "text", required: true
-        },
-        {
-            key:"email", label: "Email Address", icon: Mail, type: "email", required: true
-        },
-        {
-            key:"phone", label: "Phone Number", icon: Phone, type: "tel"
-        },
-        {
-            key:"location", label: "Location", icon: MapPin, type: "text"
-        },
-        {
-            key:"profession", label: "Profession", icon: BriefcaseBusiness, type: "text"
-        },
-        {
-            key:"linkedin", label: "LinkedIn Profile", icon: Globe, type: "url"
-        },
-        {
-            key:"website", label: "Personal Website", icon: Globe, type: "url"
-        },
-         
-    ]
-    return (   
-        <div>
-            <h3 className='text-lg font-semibold text-gray-900'>Personal Information</h3>
-            <p className='text-sm text-gray-600'>Get started with the personal information</p>
-            <div className='flex items-center gap-2'>
-                <label>
-                    {data.image ? (
-                        <img src={typeof data.image === 'string' ? data.image : URL.createObjectURL(data.image)} alt="Profile" className='w-16 h-16 rounded-full object-cover mt-5 ring ring-slate-300 hover:opacity-80'/>
-                    ) : (
-                        <div className='inline-flex items-center gap-2 mt-5 text-slate-600 hover:text-slate-700 cursor-pointer'>
-                            <User className='size-10 p-2.5 border rounded-full' />
-                            upload user image
-                        </div>
-                    )}
-                    <input type="file" accept='image/*' className='hidden' onChange={(e)=>handleInputChange("image", e.target.files[0])}/>
-                </label>
-                {typeof data.image === 'object' && (
-                    <div className='flex flex-col gap-1 pl-4 text-sm'>
-                        <p>Remove Background</p>
-                        {/* {data.image.name} */}
-                        <label className='relative inline-flex items-center cursor-pointer text-gray-900 gap-3'>
-                            <input type="checkbox" className='sr-only peer' onChange={()=> setRemoveBackground(prev => !prev)} checked={removeBackground}/>
-                            <div className='w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-green-600 transition-colors duration-200'></div>
-                            <span className='dot absolute left-1 top-1 w-2 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-4'></span>
-                        </label>
-                    </div>
+const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackground }) => {
+  const handleInputChange = (field, value) => onChange({ ...data, [field]: value })
 
-                )}
+  return (
+    <div className="space-y-1">
+      <h3 className="text-base font-semibold text-gray-900">Personal Information</h3>
+      <p className="text-xs text-gray-500">Your basic details — name, contact, and links</p>
+
+      {/* Profile image upload */}
+      <div className="flex items-center gap-4 pt-3 pb-2">
+        <label className="cursor-pointer">
+          {data.image ? (
+            <img
+              src={typeof data.image === 'string' ? data.image : URL.createObjectURL(data.image)}
+              alt="Profile"
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-slate-200 hover:opacity-80 transition-opacity"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors">
+              <User className="size-5" />
+              <span className="text-[10px] mt-0.5">Photo</span>
             </div>
-                {fields.map((field)=>{
-                    const Icon = field.icon;
-                    return (
-                        <div key={field.key} className='space-y-1 mt-5'>
-                            <label htmlFor='' className='flex items-center gap-2 text-sm font-medium text-gray-600'>
-                                <Icon className="size-4"/>
-                                {field.label}
-                                {field.required && <span className='text-red-500'>*</span>}
-                            </label>
-                            <input type={field.type} value={data[field.key] || ""} onChange={(e)=>handleInputChange(field.key, e.target.value)} className='mt-1 w-full px-3 py-2 boder border-gray-300 rounded-lg focus:ring focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm' placeholder={`Enter Your ${field.label.toLowerCase()}`} required={field.required}/>
-                            </div>
-                    )
-                })}
+          )}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleInputChange("image", e.target.files[0])} />
+        </label>
 
+        {/* Remove background toggle — only shown when a file object is selected */}
+        {typeof data.image === 'object' && (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-medium text-gray-600">Remove Background</p>
+            {/* Toggle switch — uses inline style to avoid relying on a custom .dot class */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={removeBackground}
+              onClick={() => setRemoveBackground(p => !p)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${removeBackground ? 'bg-green-500' : 'bg-slate-300'}`}
+            >
+              <span
+                className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform"
+                style={{ transform: removeBackground ? 'translateX(18px)' : 'translateX(2px)' }}
+              />
+            </button>
+          </div>
+        )}
+      </div>
 
-        </div>
-)}
+      {/* Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 pt-1">
+        {fields.map((field) => {
+          const Icon = field.icon
+          return (
+            <div key={field.key} className={field.key === 'full_name' || field.key === 'email' ? 'sm:col-span-1' : ''}>
+              <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                <Icon className="size-3.5" />
+                {field.label}
+                {field.required && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type={field.type}
+                value={data[field.key] || ""}
+                onChange={(e) => handleInputChange(field.key, e.target.value)}
+                className={inputCls}
+                placeholder={`Enter your ${field.label.toLowerCase()}`}
+                required={field.required}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 export default PersonalInfoForm
