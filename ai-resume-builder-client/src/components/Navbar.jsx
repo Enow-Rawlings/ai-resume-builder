@@ -13,13 +13,10 @@ const Navbar = () => {
     dispatch(logout());
   };
 
-  const colors = [
-    "#9400D3",
-    "#0860c4"
-  ]
   return (
     <div className="shadow-sm border-b border-[#9400D3]/10 bg-white/95 backdrop-blur-sm">
       <nav className="flex items-center justify-between max-w-7xl mx-auto w-full px-4 py-4 text-slate-900 transition-all">
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
           <div className="h-11 w-11 rounded-2xl bg-[#9400D3] flex items-center justify-center text-white font-semibold">
             CV
@@ -30,18 +27,20 @@ const Navbar = () => {
           </div>
         </Link>
 
-        <div className="hidden md:flex items-center gap-6 text-sm text-slate-700">
-          <Link to="#features" className="hover:text-[#9400D3] transition-colors">
-            Features
+        {/* Desktop nav — links that actually work inside /app */}
+        <div className="hidden md:flex items-center gap-6 text-sm text-slate-600">
+          <Link to="/app" className="hover:text-[#9400D3] transition-colors">
+            Dashboard
           </Link>
-          <Link to="#testimonials" className="hover:text-[#9400D3] transition-colors">
-            Testimonials
-          </Link>
-          <Link to="#contact" className="hover:text-[#9400D3] transition-colors">
+          <Link to="/contact" className="hover:text-[#9400D3] transition-colors">
             Contact
+          </Link>
+          <Link to="/testimonials" className="hover:text-[#9400D3] transition-colors">
+            Testimonials
           </Link>
         </div>
 
+        {/* Right side — greeting + logout */}
         <div className="hidden md:flex items-center gap-4">
           <p className="text-sm text-slate-600">Hi, {user?.name ?? "Guest"}</p>
           <button
@@ -52,12 +51,13 @@ const Navbar = () => {
           </button>
         </div>
 
+        {/* Mobile — compact row */}
         <div className="flex md:hidden items-center gap-3">
           <Link
-            to="/"
+            to="/app"
             className="text-sm font-medium text-slate-700 hover:text-[#9400D3] transition-colors"
           >
-            Home
+            Dashboard
           </Link>
           <button
             onClick={logoutUser}
