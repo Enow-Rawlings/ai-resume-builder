@@ -80,21 +80,29 @@ const TEMPLATE_NATURAL_WIDTH = 896 // max-w-4xl = 56rem = 896px
 
 const ResumePreview = ({ data, template, accentColor, classes = "" }) => {
   const containerRef = useRef(null)
+  const innerRef = useRef(null)
   const [scale, setScale] = useState(1)
+  const [scaledHeight, setScaledHeight] = useState('auto')
 
   useEffect(() => {
-    const updateScale = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth
-        const newScale = Math.min(1, containerWidth / TEMPLATE_NATURAL_WIDTH)
-        setScale(newScale)
-      }
+    const update = () => {
+      if (!containerRef.current || !innerRef.current) return
+      const containerWidth = containerRef.current.offsetWidth
+      const newScale = Math.min(1, containerWidth / TEMPLATE_NATURAL_WIDTH)
+      const innerHeight = innerRef.current.scrollHeight
+      // The outer container must be exactly (innerHeight * scale) tall
+      // so there's no gap below the scaled content
+      setScale(newScale)
+      setScaledHeight(innerHeight * newScale)
     }
-    updateScale()
-    const ro = new ResizeObserver(updateScale)
+
+    update()
+
+    const ro = new ResizeObserver(update)
     if (containerRef.current) ro.observe(containerRef.current)
+    if (innerRef.current) ro.observe(innerRef.current)
     return () => ro.disconnect()
-  }, [])
+  }, [data, template]) // re-measure when content changes
 
   const renderTemplate = () => {
     switch (template) {
@@ -109,16 +117,21 @@ const ResumePreview = ({ data, template, accentColor, classes = "" }) => {
   }
 
   return (
-    <div ref={containerRef} className={'w-full bg-gray-100 overflow-hidden ' + classes}>
-      {/* Scaled wrapper — shrinks template to fit container width on mobile */}
+    // Outer container — its height is set to exactly the scaled content height
+    <div
+      ref={containerRef}
+      className={'w-full overflow-hidden ' + classes}
+      style={{ height: scaledHeight }}
+    >
+      {/* Inner div — natural width, scaled down from top-left */}
       <div
+        ref={innerRef}
         id="resume-preview"
-        className="origin-top-left border border-gray-200 print:shadow-none print:border-none bg-white"
+        className="origin-top-left bg-white print:shadow-none print:border-none"
         style={{
-          transform: `scale(${scale})`,
           width: `${TEMPLATE_NATURAL_WIDTH}px`,
-          // height auto-adjusts; outer container clips via overflow-hidden
-          marginBottom: scale < 1 ? `${-(TEMPLATE_NATURAL_WIDTH * (1 - scale))}px` : 0,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
         }}
       >
         {renderTemplate()}
