@@ -118,7 +118,7 @@ const App = () => {
   }, [])
 
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || 'placeholder'}>
       <Toaster />
       <Routes>
         <Route path='/' element={<Home />} />

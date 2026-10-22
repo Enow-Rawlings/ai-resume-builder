@@ -64,13 +64,9 @@ const Login = () => {
   };
 
   // ── Google OAuth ───────────────────────────────────────────────────
-  // useGoogleLogin gives us an access_token we send to our backend.
-  // The backend verifies it with Google, creates/finds the user, and
-  // returns our app's own JWT + user object.
-  //
-  // Backend endpoint needed: POST /api/users/google-auth
-  //   Body:  { access_token: string }
-  //   Returns: { token: string, user: object, message: string }
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const googleEnabled = !!googleClientId
+
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true)
@@ -141,7 +137,13 @@ const Login = () => {
           <>
             <button
               type="button"
-              onClick={() => handleGoogleLogin()}
+              onClick={() => {
+                if (!googleEnabled) {
+                  toast.error('Google sign-in is not configured yet.')
+                  return
+                }
+                handleGoogleLogin()
+              }}
               disabled={googleLoading}
               className="w-full h-12 flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 mb-4 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
@@ -153,8 +155,7 @@ const Login = () => {
               ) : (
                 <GoogleIcon />
               )}
-              {googleLoading ? "Signing in..." : `Continue with Google`}
-            </button>
+              {googleLoading ? "Signing in..." : `Continue with Google`}            </button>
 
             {/* OR divider */}
             <div className="flex items-center gap-3 mb-4">
