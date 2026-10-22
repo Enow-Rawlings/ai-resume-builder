@@ -1,161 +1,196 @@
-import { Mail, Phone, MapPin, Globe } from "lucide-react";
+import { Globe, Mail, MapPin, Phone } from "lucide-react";
+
+const DEFAULT_ORDER = ['professional_summary','experience','education','project','skills','languages','professional_bodies','references']
 
 const ClassicTemplate = ({ data, accentColor }) => {
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "";
-        const [year, month] = dateStr.split("-");
-        return new Date(year, month - 1).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short"
-        });
-    };
+  const fmt = (d) => {
+    if (!d) return ""
+    const [y, m] = d.split("-")
+    return new Date(y, m - 1).toLocaleDateString("en-US", { year: "numeric", month: "short" })
+  }
 
-    return (
-        <div className="max-w-4xl mx-auto p-8 bg-white text-gray-800 leading-relaxed">
-            {/* Header */}
-            <header className="text-center mb-8 pb-6 border-b-2" style={{ borderColor: accentColor }}>
-                <h1 className="text-3xl font-bold mb-2" style={{ color: accentColor }}>
-                    {data.personal_info?.full_name || "Your Name"}
-                </h1>
+  const H = ({ children }) => (
+    <h2 className="text-base font-bold mb-3 pb-1 border-b-2 uppercase tracking-wider" style={{ color: accentColor, borderColor: accentColor }}>
+      {children}
+    </h2>
+  )
 
-                <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
-                    {data.personal_info?.email && (
-                        <div className="flex items-center gap-1">
-                            <Mail className="size-4" />
-                            <span>{data.personal_info.email}</span>
-                        </div>
-                    )}
-                    {data.personal_info?.phone && (
-                        <div className="flex items-center gap-1">
-                            <Phone className="size-4" />
-                            <span>{data.personal_info.phone}</span>
-                        </div>
-                    )}
-                    {data.personal_info?.location && (
-                        <div className="flex items-center gap-1">
-                            <MapPin className="size-4" />
-                            <span>{data.personal_info.location}</span>
-                        </div>
-                    )}
-                    {data.personal_info?.linkedin && (
-                        <div className="flex items-center gap-1">
-                            <Globe className="size-4" />
-                            <span className="break-all">{data.personal_info.linkedin}</span>
-                        </div>
-                    )}
-                    {data.personal_info?.website && (
-                        <div className="flex items-center gap-1">
-                            <Globe className="size-4" />
-                            <span className="break-all">{data.personal_info.website}</span>
-                        </div>
-                    )}
+  const order = data.section_order?.length ? data.section_order : DEFAULT_ORDER
+
+  const renderSection = (key) => {
+    switch (key) {
+      case 'professional_summary':
+        return data.professional_summary ? (
+          <section key="professional_summary" className="mb-5">
+            <H>Professional Summary</H>
+            <p className="text-gray-700 leading-relaxed text-sm">{data.professional_summary}</p>
+          </section>
+        ) : null
+
+      case 'experience':
+        return data.experience?.length > 0 ? (
+          <section key="experience" className="mb-5">
+            <H>Professional Experience</H>
+            <div className="space-y-4">
+              {data.experience.map((exp, i) => (
+                <div key={i} className="border-l-4 pl-4" style={{ borderColor: accentColor }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{exp.position}</p>
+                      <p className="text-gray-600 text-sm">{exp.company}</p>
+                    </div>
+                    <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                      {fmt(exp.start_date)} – {exp.is_current ? "Present" : fmt(exp.end_date)}
+                    </p>
+                  </div>
+                  {exp.description && <p className="mt-2 text-sm text-gray-600 leading-relaxed whitespace-pre-line">{exp.description}</p>}
                 </div>
-            </header>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-            {/* Professional Summary */}
-            {data.professional_summary && (
-                <section className="mb-6">
-                    <h2 className="text-xl font-semibold mb-3" style={{ color: accentColor }}>
-                        PROFESSIONAL SUMMARY
-                    </h2>
-                    <p className="text-gray-700 leading-relaxed">{data.professional_summary}</p>
-                </section>
-            )}
+      case 'education':
+        return data.education?.length > 0 ? (
+          <section key="education" className="mb-5">
+            <H>Education</H>
+            <div className="space-y-3">
+              {data.education.map((edu, i) => (
+                <div key={i} className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{edu.degree}{edu.field ? ` in ${edu.field}` : ""}</p>
+                    <p className="text-gray-600 text-sm">{edu.institution}</p>
+                    {edu.gpa && <p className="text-xs text-gray-500">GPA: {edu.gpa}</p>}
+                  </div>
+                  <p className="text-xs text-gray-500 whitespace-nowrap ml-2">{fmt(edu.graduation_date)}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-            {/* Experience */}
-            {data.experience && data.experience.length > 0 && (
-                <section className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
-                        PROFESSIONAL EXPERIENCE
-                    </h2>
+      case 'project':
+        return data.project?.length > 0 ? (
+          <section key="project" className="mb-5">
+            <H>Projects</H>
+            <div className="space-y-3">
+              {data.project.map((p, i) => (
+                <div key={i} className="border-l-2 border-gray-300 pl-4">
+                  <p className="font-semibold text-gray-800 text-sm">{p.name}</p>
+                  {p.type && <p className="text-xs text-gray-500">{p.type}</p>}
+                  {p.description && <p className="text-sm text-gray-600 mt-1">{p.description}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-                    <div className="space-y-4">
-                        {data.experience.map((exp, index) => (
-                            <div key={index} className="border-l-3 pl-4" style={{ borderColor: accentColor }}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900">{exp.position}</h3>
-                                        <p className="text-gray-700 font-medium">{exp.company}</p>
-                                    </div>
-                                    <div className="text-right text-sm text-gray-600">
-                                        <p>{formatDate(exp.start_date)} - {exp.is_current ? "Present" : formatDate(exp.end_date)}</p>
-                                    </div>
-                                </div>
-                                {exp.description && (
-                                    <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                                        {exp.description}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+      case 'skills':
+        return data.skills?.length > 0 ? (
+          <section key="skills" className="mb-5">
+            <H>Skills</H>
+            <div className="flex flex-wrap gap-2">
+              {data.skills.map((s, i) => (
+                <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium border" style={{ color: accentColor, borderColor: accentColor + "50", backgroundColor: accentColor + "10" }}>{s}</span>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-            {/* Projects */}
-            {data.project && data.project.length > 0 && (
-                <section className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
-                        PROJECTS
-                    </h2>
+      case 'languages':
+        return data.languages?.length > 0 ? (
+          <section key="languages" className="mb-5">
+            <H>Languages</H>
+            <div className="grid grid-cols-2 gap-2">
+              {data.languages.map((l, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-800 font-medium">{l.language}</span>
+                  {l.proficiency && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{l.proficiency}</span>}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-                    <ul className="space-y-3 ">
-                        {data.project.map((proj, index) => (
-                            <div key={index} className="flex justify-between items-start border-l-3 border-gray-300 pl-6">
-                                <div>
-                                    <li className="font-semibold text-gray-800 ">{proj.name}</li>
-                                    <p className="text-gray-600">{proj.description}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </ul>
-                </section>
-            )}
+      case 'professional_bodies':
+        return data.professional_bodies?.length > 0 ? (
+          <section key="professional_bodies" className="mb-5">
+            <H>Professional Bodies</H>
+            <div className="space-y-2">
+              {data.professional_bodies.map((b, i) => (
+                <div key={i} className="flex items-start justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">{b.organization}</p>
+                    {b.membership_type && <p className="text-xs text-gray-500">{b.membership_type}</p>}
+                  </div>
+                  {b.year_joined && <p className="text-xs text-gray-500 whitespace-nowrap ml-2">{b.year_joined}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-            {/* Education */}
-            {data.education && data.education.length > 0 && (
-                <section className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
-                        EDUCATION
-                    </h2>
+      case 'references':
+        return data.references?.length > 0 ? (
+          <section key="references" className="mb-5">
+            <H>References</H>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {data.references.map((r, i) => (
+                <div key={i} className="text-sm">
+                  <p className="font-semibold text-gray-900">{r.name}</p>
+                  {r.title && <p className="text-gray-600">{r.title}</p>}
+                  {r.company && <p className="text-gray-500">{r.company}</p>}
+                  {r.relationship && <p className="text-xs text-gray-400">{r.relationship}</p>}
+                  <div className="mt-1 space-y-0.5">
+                    {r.email && <p className="text-xs text-gray-500">{r.email}</p>}
+                    {r.phone && <p className="text-xs text-gray-500">{r.phone}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null
 
-                    <div className="space-y-3">
-                        {data.education.map((edu, index) => (
-                            <div key={index} className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-semibold text-gray-900">
-                                        {edu.degree} {edu.field && `in ${edu.field}`}
-                                    </h3>
-                                    <p className="text-gray-700">{edu.institution}</p>
-                                    {edu.gpa && <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    <p>{formatDate(edu.graduation_date)}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+      default: return null
+    }
+  }
 
-            {/* Skills */}
-            {data.skills && data.skills.length > 0 && (
-                <section className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
-                        CORE SKILLS
-                    </h2>
+  const pi = data.personal_info || {}
 
-                    <div className="flex gap-4 flex-wrap">
-                        {data.skills.map((skill, index) => (
-                            <div key={index} className="text-gray-700">
-                                • {skill}
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+  return (
+    <div className="max-w-4xl mx-auto p-8 bg-white text-gray-800 text-sm leading-relaxed">
+      {/* Header */}
+      <header className="text-center mb-8 pb-6 border-b-2" style={{ borderColor: accentColor }}>
+        {pi.image && (
+          <img src={typeof pi.image === 'object' ? URL.createObjectURL(pi.image) : pi.image}
+            alt="Profile" className="w-20 h-20 rounded-full object-cover mx-auto mb-3 ring-2" style={{ ringColor: accentColor }} />
+        )}
+        <h1 className="text-3xl font-bold mb-1" style={{ color: accentColor }}>{pi.full_name || "Your Name"}</h1>
+        {pi.profession && <p className="text-gray-600 font-medium mb-2">{pi.profession}</p>}
+
+        {/* Personal details row (DOB, Nationality) */}
+        {(pi.date_of_birth || pi.nationality) && (
+          <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500 mb-2">
+            {pi.date_of_birth && <span>Born: {pi.date_of_birth}</span>}
+            {pi.nationality && <span>Nationality: {pi.nationality}</span>}
+          </div>
+        )}
+
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+          {pi.email    && <span className="flex items-center gap-1"><Mail    className="size-3.5" />{pi.email}</span>}
+          {pi.phone    && <span className="flex items-center gap-1"><Phone   className="size-3.5" />{pi.phone}</span>}
+          {pi.location && <span className="flex items-center gap-1"><MapPin  className="size-3.5" />{pi.location}</span>}
+          {pi.linkedin && <span className="flex items-center gap-1"><Globe   className="size-3.5" />{pi.linkedin.replace("https://www.","").replace("https://","")}</span>}
+          {pi.website  && <span className="flex items-center gap-1"><Globe   className="size-3.5" />{pi.website.replace("https://","")}</span>}
+          {pi.social_media?.map((s, i) => s.url && (
+            <span key={i} className="flex items-center gap-1"><Globe className="size-3.5" />{s.platform ? `${s.platform}: ` : ""}{s.url.replace("https://","")}</span>
+          ))}
         </div>
-    );
+      </header>
+
+      {order.map(renderSection)}
+    </div>
+  )
 }
 
-export default ClassicTemplate;
+export default ClassicTemplate
