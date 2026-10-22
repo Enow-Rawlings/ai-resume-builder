@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux'
 import { login } from '../app/features/authSlice.js'
 import { toast } from 'react-hot-toast'
 import { useGoogleLogin } from '@react-oauth/google'
+import { useNavigate } from 'react-router-dom'
 
 // Google "G" SVG icon — no external image needed
 const GoogleIcon = () => (
@@ -30,6 +31,7 @@ const Login = () => {
   });
 
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   // ── Email/password submit ──────────────────────────────────────────
   const handleSubmit = async (e) => {
@@ -49,6 +51,7 @@ const Login = () => {
         localStorage.setItem("token", data.token);
         dispatch(login(data));
         toast.success(data.message)
+        navigate('/app')
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong")
@@ -79,6 +82,7 @@ const Login = () => {
           localStorage.setItem('token', data.token)
           dispatch(login(data))
           toast.success(data.message || 'Signed in with Google')
+          navigate('/app')
         }
       } catch (error) {
         const status = error?.response?.status

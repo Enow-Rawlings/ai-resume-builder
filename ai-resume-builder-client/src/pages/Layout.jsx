@@ -1,28 +1,31 @@
 import React from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { useSelector } from 'react-redux'
-import { Loader } from 'lucide-react'
-import Login from './Login'
+import { Loader2 } from 'lucide-react'
 
 const Layout = () => {
-
   const { user, loading } = useSelector((state) => state.auth)
 
+  // Still resolving the session from localStorage — show a spinner
   if (loading) {
-    return <Loader />
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin text-[#9400D3]" />
+      </div>
+    )
   }
 
+  // Not authenticated — redirect to /login
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Authenticated — render the app shell
   return (
-    <div>
-      {user ? (
-        <div className='min-h-screen bg-gray-50'>
-          <Navbar />
-          <Outlet />
-        </div>
-      ) : (
-        <Login />
-      )}
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <Outlet />
     </div>
   )
 }
