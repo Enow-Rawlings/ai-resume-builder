@@ -64,6 +64,7 @@ const INITIAL_DATA = {
   personal_info: {},
   professional_summary: '',
   experience: [], education: [], project: [], skills: [],
+  skills_categorized: { core: [], technical: [], soft: [] },
   languages: [], references: [], professional_bodies: [],
   section_order: DEFAULT_SECTION_ORDER,
   template: 'classic',
@@ -99,6 +100,26 @@ const ResumeBuilder = () => {
         if (!Array.isArray(resume.section_order) || resume.section_order.length === 0) {
           resume.section_order = DEFAULT_SECTION_ORDER
         }
+        // Back-fill skills_categorized for older resumes that only have flat skills.
+        // Existing flat skills migrate into "core" so nothing is lost.
+        const hasCategorized = resume.skills_categorized &&
+          (resume.skills_categorized.core?.length > 0 ||
+           resume.skills_categorized.technical?.length > 0 ||
+           resume.skills_categorized.soft?.length > 0)
+        if (!hasCategorized) {
+          resume.skills_categorized = {
+            core: Array.isArray(resume.skills) ? [...resume.skills] : [],
+            technical: [],
+            soft: [],
+          }
+        } else {
+          // Ensure all three keys exist even if the DB doc is missing some
+          resume.skills_categorized = {
+            core:      Array.isArray(resume.skills_categorized.core)      ? resume.skills_categorized.core      : [],
+            technical: Array.isArray(resume.skills_categorized.technical) ? resume.skills_categorized.technical : [],
+            soft:      Array.isArray(resume.skills_categorized.soft)      ? resume.skills_categorized.soft      : [],
+          }
+        }
         setResumeData(resume)
         document.title = resume.title
       }
@@ -115,6 +136,14 @@ const ResumeBuilder = () => {
     if (typeof resumeData.personal_info.image === 'object') {
       delete payload.personal_info.image
     }
+
+    // Keep flat skills in sync — merge all categories so templates keep working
+    const sc = payload.skills_categorized || { core: [], technical: [], soft: [] }
+    payload.skills = [
+      ...(sc.core      || []),
+      ...(sc.technical || []),
+      ...(sc.soft      || []),
+    ]
 
     const useFormData = typeof resumeData.personal_info.image === 'object' || removeBackground
 
@@ -202,8 +231,8 @@ const ResumeBuilder = () => {
         return <ProjectForm data={resumeData.project}
           onChange={d => setResumeData(p => ({ ...p, project: d }))} />
       case 'skills':
-        return <SkillsForm data={resumeData.skills}
-          onChange={d => setResumeData(p => ({ ...p, skills: d }))} />
+        return <SkillsForm data={resumeData.skills_categorized}
+          onChange={d => setResumeData(p => ({ ...p, skills_categorized: d }))} />
       case 'languages':
         return <LanguagesForm data={resumeData.languages}
           onChange={d => setResumeData(p => ({ ...p, languages: d }))} />

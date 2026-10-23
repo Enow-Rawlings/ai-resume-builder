@@ -85,17 +85,43 @@ const ClassicTemplate = ({ data, accentColor }) => {
           </section>
         ) : null
 
-      case 'skills':
-        return data.skills?.length > 0 ? (
+      case 'skills': {
+        const sc = data.skills_categorized
+        const hasCats = sc && (sc.core?.length > 0 || sc.technical?.length > 0 || sc.soft?.length > 0)
+        const flatSkills = data.skills || []
+        if (!hasCats && flatSkills.length === 0) return null
+        const pillCls = `px-2.5 py-1 rounded-full text-xs font-medium border`
+        const pillStyle = { color: accentColor, borderColor: accentColor + "50", backgroundColor: accentColor + "10" }
+        return (
           <section key="skills" className="mb-5">
             <H>Skills</H>
-            <div className="flex flex-wrap gap-2">
-              {data.skills.map((s, i) => (
-                <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium border" style={{ color: accentColor, borderColor: accentColor + "50", backgroundColor: accentColor + "10" }}>{s}</span>
-              ))}
-            </div>
+            {hasCats ? (
+              <div className="space-y-3">
+                {sc.core?.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Core</p>
+                    <div className="flex flex-wrap gap-2">{sc.core.map((s, i) => <span key={i} className={pillCls} style={pillStyle}>{s}</span>)}</div>
+                  </div>
+                )}
+                {sc.technical?.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Technical</p>
+                    <div className="flex flex-wrap gap-2">{sc.technical.map((s, i) => <span key={i} className={pillCls} style={pillStyle}>{s}</span>)}</div>
+                  </div>
+                )}
+                {sc.soft?.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Soft</p>
+                    <div className="flex flex-wrap gap-2">{sc.soft.map((s, i) => <span key={i} className={pillCls} style={pillStyle}>{s}</span>)}</div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">{flatSkills.map((s, i) => <span key={i} className={pillCls} style={pillStyle}>{s}</span>)}</div>
+            )}
           </section>
-        ) : null
+        )
+      }
 
       case 'languages':
         return data.languages?.length > 0 ? (

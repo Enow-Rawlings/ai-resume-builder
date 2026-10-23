@@ -78,13 +78,41 @@ const MinimalTemplate = ({ data, accentColor }) => {
           </section>
         ) : null
 
-      case 'skills':
-        return data.skills?.length > 0 ? (
+      case 'skills': {
+        const sc = data.skills_categorized
+        const hasCats = sc && (sc.core?.length > 0 || sc.technical?.length > 0 || sc.soft?.length > 0)
+        const flatSkills = data.skills || []
+        if (!hasCats && flatSkills.length === 0) return null
+        return (
           <section key="skills" className="mb-8">
             <H>Skills</H>
-            <p className="text-gray-700">{data.skills.join(" · ")}</p>
+            {hasCats ? (
+              <div className="space-y-2">
+                {sc.core?.length > 0 && (
+                  <div className="flex gap-2 items-baseline">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 shrink-0 w-16">Core</span>
+                    <p className="text-gray-700">{sc.core.join(" · ")}</p>
+                  </div>
+                )}
+                {sc.technical?.length > 0 && (
+                  <div className="flex gap-2 items-baseline">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 shrink-0 w-16">Tech</span>
+                    <p className="text-gray-700">{sc.technical.join(" · ")}</p>
+                  </div>
+                )}
+                {sc.soft?.length > 0 && (
+                  <div className="flex gap-2 items-baseline">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 shrink-0 w-16">Soft</span>
+                    <p className="text-gray-700">{sc.soft.join(" · ")}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-700">{flatSkills.join(" · ")}</p>
+            )}
           </section>
-        ) : null
+        )
+      }
 
       case 'languages':
         return data.languages?.length > 0 ? (

@@ -26,6 +26,15 @@ const ResumeSchema = new mongoose.Schema({
     professional_summary: { type: String, default: "" },
     skills: [{ type: String }],
 
+    // Categorized skills — added alongside flat skills for backward compatibility.
+    // The flat `skills` array is always kept as a merged union of all three categories
+    // so templates and existing data continue to work without changes.
+    skills_categorized: {
+        core:      { type: [String], default: [] },
+        technical: { type: [String], default: [] },
+        soft:      { type: [String], default: [] },
+    },
+
     personal_info: {
         image:        { type: String, default: '' },
         full_name:    { type: String, default: '' },
