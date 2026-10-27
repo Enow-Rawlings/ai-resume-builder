@@ -3,52 +3,54 @@
  * Renders #resume-preview to a PDF using html2canvas + jsPDF.
  *
  * html2canvas v1 doesn't support modern CSS color functions (oklch, lab, color())
- * used by Tailwind v4. We use the onclone hook to scrub those from the cloned DOM
- * before capture so html2canvas never encounters them.
+ * used by Tailwind v4. We resolve all computed colors to rgb() in the cloned DOM
+ * before html2canvas processes it.
  */
+
+// CSS color properties that html2canvas needs to paint correctly
+const COLOR_PROPS = [
+  'color',
+  'backgroundColor',
+  'borderTopColor',
+  'borderRightColor',
+  'borderBottomColor',
+  'borderLeftColor',
+  'outlineColor',
+  'textDecorationColor',
+  'fill',
+  'stroke',
+  'caretColor',
+  'columnRuleColor',
+]
 
 /**
- * Walk every element in a root node and replace any computed style property
- * that contains an unsupported CSS color function with a safe fallback.
+ * Walk every element in the cloned document and inline all computed color
+ * values as explicit rgb() strings. This means html2canvas never has to
+ * parse oklch / oklab / color() — it just sees ordinary rgb() values.
+ *
+ * IMPORTANT: the cloned document is detached from the main window, so
+ * getComputedStyle must be called on the *original* document's window,
+ * passing the matching element by index.
  */
-const scrubModernColors = (root) => {
-  const UNSUPPORTED = /\b(oklch|oklab|lab|lch|color|color-mix)\s*\(/gi
-  const els = root.querySelectorAll('*')
+const inlineComputedColors = (originalRoot, clonedRoot) => {
+  const originalEls = originalRoot.querySelectorAll('*')
+  const clonedEls   = clonedRoot.querySelectorAll('*')
 
-  els.forEach(el => {
-    const computed = window.getComputedStyle(el)
-    const props = [
-      'color', 'backgroundColor', 'borderColor',
-      'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-      'outlineColor', 'textDecorationColor', 'fill', 'stroke',
-    ]
-
-    props.forEach(prop => {
+  // Inline the root element itself too
+  const resolveEl = (origEl, cloneEl) => {
+    if (!origEl || !cloneEl) return
+    const computed = window.getComputedStyle(origEl)
+    COLOR_PROPS.forEach(prop => {
       const val = computed[prop]
-      if (val && UNSUPPORTED.test(val)) {
-        UNSUPPORTED.lastIndex = 0
-        // Fallback: keep the element but make the color transparent/default
-        // so at least the layout and text render correctly
-        if (prop === 'backgroundColor') el.style[prop] = 'transparent'
-        else if (prop === 'color') el.style[prop] = '#000000'
-        else el.style[prop] = 'transparent'
+      // Only inline if the browser gave us something — skip empty / 'none'
+      if (val && val !== '' && val !== 'none' && val !== 'currentColor') {
+        cloneEl.style[prop] = val
       }
-      UNSUPPORTED.lastIndex = 0
     })
+  }
 
-    // Also scrub inline style attribute directly
-    if (el.getAttribute('style')) {
-      const inlineStyle = el.getAttribute('style')
-      if (UNSUPPORTED.test(inlineStyle)) {
-        UNSUPPORTED.lastIndex = 0
-        el.setAttribute('style', inlineStyle.replace(UNSUPPORTED, (match) => {
-          // replace the whole function call — find balanced parens
-          return 'transparent'
-        }))
-      }
-      UNSUPPORTED.lastIndex = 0
-    }
-  })
+  resolveEl(originalRoot, clonedRoot)
+  originalEls.forEach((origEl, i) => resolveEl(origEl, clonedEls[i]))
 }
 
 export const downloadPdf = async (filename = 'resume') => {
@@ -84,8 +86,10 @@ export const downloadPdf = async (filename = 'resume') => {
     parent.style.height   = 'auto'
   }
 
-  // Small delay so the browser repaints before capture
-  await new Promise(r => setTimeout(r, 150))
+  // Capture the natural dimensions after removing the transform
+  await new Promise(r => setTimeout(r, 200))
+  const captureWidth  = el.scrollWidth
+  const captureHeight = el.scrollHeight
 
   try {
     // ── 2. Capture canvas ────────────────────────────────────────────
@@ -95,13 +99,17 @@ export const downloadPdf = async (filename = 'resume') => {
       allowTaint:      false,
       backgroundColor: '#ffffff',
       logging:         false,
-      width:           el.scrollWidth,
-      height:          el.scrollHeight,
-      windowWidth:     el.scrollWidth,
-      windowHeight:    el.scrollHeight,
-      // Scrub modern CSS color functions before html2canvas tries to parse them
-      onclone: (_doc, clonedEl) => {
-        scrubModernColors(clonedEl)
+      width:           captureWidth,
+      height:          captureHeight,
+      windowWidth:     captureWidth,
+      windowHeight:    captureHeight,
+      // Inline all computed colors onto the cloned DOM so html2canvas
+      // never has to parse oklch / color() / oklab values from stylesheets.
+      onclone: (clonedDoc) => {
+        const clonedEl = clonedDoc.getElementById('resume-preview')
+        if (clonedEl) {
+          inlineComputedColors(el, clonedEl)
+        }
       },
     })
 
