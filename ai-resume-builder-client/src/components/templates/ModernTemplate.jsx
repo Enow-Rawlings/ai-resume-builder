@@ -160,7 +160,7 @@ const ModernTemplate = ({ data, accentColor }) => {
         return data.references?.length > 0 ? (
           <section key="references" className="mb-7">
             <H>References</H>
-            <div className="grid sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-2 gap-5">
               {data.references.map((r, i) => (
                 <div key={i} className="p-3 bg-gray-50 rounded-xl">
                   <p className="font-semibold text-gray-900">{r.name}</p>
@@ -206,7 +206,7 @@ const ModernTemplate = ({ data, accentColor }) => {
               {pi.nationality && <span>Nationality: {pi.nationality}</span>}
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-sm mt-3">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm mt-3">
             {pi.email    && <span className="flex items-center gap-2"><Mail  className="size-4" />{pi.email}</span>}
             {pi.phone    && <span className="flex items-center gap-2"><Phone className="size-4" />{pi.phone}</span>}
             {pi.location && <span className="flex items-center gap-2"><MapPin className="size-4" />{pi.location}</span>}

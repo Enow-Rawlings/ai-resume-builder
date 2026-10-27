@@ -151,7 +151,7 @@ const MinimalTemplate = ({ data, accentColor }) => {
         return data.references?.length > 0 ? (
           <section key="references" className="mb-8">
             <H>References</H>
-            <div className="grid sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               {data.references.map((r, i) => (
                 <div key={i}>
                   <p className="font-medium text-gray-900">{r.name}</p>

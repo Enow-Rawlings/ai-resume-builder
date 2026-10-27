@@ -160,7 +160,7 @@ const ClassicTemplate = ({ data, accentColor }) => {
         return data.references?.length > 0 ? (
           <section key="references" className="mb-5">
             <H>References</H>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {data.references.map((r, i) => (
                 <div key={i} className="text-sm">
                   <p className="font-semibold text-gray-900">{r.name}</p>

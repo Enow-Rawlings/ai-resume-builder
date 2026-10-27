@@ -73,7 +73,7 @@ const CreativeTemplate = ({ data, accentColor }) => {
         return data.project?.length > 0 ? (
           <section key="project" className="mb-8">
             <Badge>Projects</Badge>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {data.project.map((p, i) => (
                 <div key={i} className="rounded-2xl p-4 border" style={{ borderColor: accentColor + "25", backgroundColor: accentColor + "06" }}>
                   <p className="text-sm font-bold text-gray-800">{p.name}</p>
@@ -162,7 +162,7 @@ const CreativeTemplate = ({ data, accentColor }) => {
         return data.references?.length > 0 ? (
           <section key="references" className="mb-8">
             <Badge>References</Badge>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {data.references.map((r, i) => (
                 <div key={i} className="rounded-2xl p-4 border" style={{ borderColor: accentColor + "25" }}>
                   <p className="text-sm font-bold text-gray-900">{r.name}</p>
