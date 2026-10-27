@@ -120,7 +120,7 @@ const ResumePreview = ({ data, template, accentColor, classes = "" }) => {
     // Outer container — its height is set to exactly the scaled content height
     <div
       ref={containerRef}
-      className={'w-full overflow-hidden ' + classes}
+      className={'resume-scale-outer w-full overflow-hidden ' + classes}
       style={{ height: scaledHeight }}
     >
       {/* Inner div — natural width, scaled down from top-left */}
@@ -139,28 +139,57 @@ const ResumePreview = ({ data, template, accentColor, classes = "" }) => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @page { size: letter; margin: 0; }
+
         @media print {
-          html, body { width: 8.5in; height: 11in; overflow: hidden; }
-          body * { visibility: hidden; }
-          #resume-preview, #resume-preview * { visibility: visible; }
-          #resume-preview {
-            position: absolute; left: 0; top: 0;
-            width: 100%; height: auto; margin: 0; padding: 0;
-            box-shadow: none !important; border: none !important;
-            transform: none !important;
+          /* 1. Reset the outer scaling container so it doesn't clip */
+          .resume-scale-outer {
+            overflow: visible !important;
+            height: auto !important;
           }
-          #resume-preview, #resume-preview * {
+
+          /* 2. Reset the inner scaled div to full natural size */
+          #resume-preview {
+            transform: none !important;
+            width: 100% !important;
+            position: fixed;
+            left: 0;
+            top: 0;
+            margin: 0;
+            padding: 0;
+            box-shadow: none !important;
+            border: none !important;
+          }
+
+          /* 3. Hide everything on the page except the resume */
+          body * { visibility: hidden; }
+          #resume-preview,
+          #resume-preview * { visibility: visible; }
+
+          /* 4. Preserve background colours and images */
+          #resume-preview,
+          #resume-preview * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+
           #resume-preview header {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             background-color: inherit !important;
             color: inherit !important;
           }
+
+          /* 5. SVG print fallback for ModernTemplate header */
           .print-svg { display: none !important; }
-          @media print { .print-svg { display: block !important; } }
+        }
+
+        /* Show print-svg only when actually printing */
+        @media print {
+          .print-svg { display: block !important; }
+        }
+
+        html, body {
+          width: 8.5in;
         }
       `}} />
     </div>
