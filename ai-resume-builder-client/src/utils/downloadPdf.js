@@ -2,55 +2,79 @@
  * downloadPdf(filename)
  * Renders #resume-preview to a PDF using html2canvas + jsPDF.
  *
- * html2canvas v1 doesn't support modern CSS color functions (oklch, lab, color())
- * used by Tailwind v4. We resolve all computed colors to rgb() in the cloned DOM
- * before html2canvas processes it.
+ * html2canvas v1 throws on modern CSS color functions (oklch, lab, color(), etc.)
+ * used by Tailwind v4. Strategy:
+ *   1. In the onclone hook, walk every element and inline ALL computed styles
+ *      as explicit values (getComputedStyle gives us resolved rgb() values).
+ *   2. Remove every <style> and <link rel="stylesheet"> from the cloned document
+ *      so html2canvas never even tries to parse the raw Tailwind CSS rules.
+ * After this, html2canvas only sees plain inline styles — no color functions.
  */
 
-// CSS color properties that html2canvas needs to paint correctly
-const COLOR_PROPS = [
-  'color',
-  'backgroundColor',
-  'borderTopColor',
-  'borderRightColor',
-  'borderBottomColor',
-  'borderLeftColor',
-  'outlineColor',
-  'textDecorationColor',
-  'fill',
-  'stroke',
-  'caretColor',
-  'columnRuleColor',
+// All CSS properties we need to inline so layout + paint look correct
+const ALL_STYLE_PROPS = [
+  // Colors
+  'color', 'backgroundColor',
+  'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+  'outlineColor', 'textDecorationColor', 'fill', 'stroke',
+  // Box model
+  'display', 'position', 'top', 'right', 'bottom', 'left',
+  'width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight',
+  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+  'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+  'boxSizing',
+  // Border
+  'borderWidth', 'borderStyle',
+  'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+  'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
+  'borderRadius',
+  'borderTopLeftRadius', 'borderTopRightRadius',
+  'borderBottomLeftRadius', 'borderBottomRightRadius',
+  // Flexbox / Grid
+  'flexDirection', 'flexWrap', 'justifyContent', 'alignItems', 'alignSelf',
+  'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'gap', 'rowGap', 'columnGap',
+  'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
+  // Typography
+  'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight',
+  'letterSpacing', 'textAlign', 'textTransform', 'textDecoration',
+  'whiteSpace', 'wordBreak', 'overflowWrap',
+  // Visual
+  'opacity', 'overflow', 'overflowX', 'overflowY',
+  'boxShadow', 'textShadow',
+  'backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat',
+  'objectFit', 'objectPosition',
+  'verticalAlign', 'listStyleType',
+  'zIndex', 'visibility',
 ]
 
 /**
- * Walk every element in the cloned document and inline all computed color
- * values as explicit rgb() strings. This means html2canvas never has to
- * parse oklch / oklab / color() — it just sees ordinary rgb() values.
- *
- * IMPORTANT: the cloned document is detached from the main window, so
- * getComputedStyle must be called on the *original* document's window,
- * passing the matching element by index.
+ * Inline all computed styles onto every cloned element, then strip all
+ * stylesheets from the cloned document. html2canvas will only see the
+ * inlined values — no raw CSS rules with unsupported color functions.
  */
-const inlineComputedColors = (originalRoot, clonedRoot) => {
-  const originalEls = originalRoot.querySelectorAll('*')
-  const clonedEls   = clonedRoot.querySelectorAll('*')
+const prepareClone = (originalRoot, clonedDoc) => {
+  const originalEls = [originalRoot, ...originalRoot.querySelectorAll('*')]
+  const clonedRoot  = clonedDoc.getElementById(originalRoot.id)
+  const clonedEls   = clonedRoot ? [clonedRoot, ...clonedRoot.querySelectorAll('*')] : []
 
-  // Inline the root element itself too
-  const resolveEl = (origEl, cloneEl) => {
-    if (!origEl || !cloneEl) return
+  originalEls.forEach((origEl, i) => {
+    const cloneEl = clonedEls[i]
+    if (!cloneEl) return
     const computed = window.getComputedStyle(origEl)
-    COLOR_PROPS.forEach(prop => {
-      const val = computed[prop]
-      // Only inline if the browser gave us something — skip empty / 'none'
-      if (val && val !== '' && val !== 'none' && val !== 'currentColor') {
-        cloneEl.style[prop] = val
+    ALL_STYLE_PROPS.forEach(prop => {
+      try {
+        const val = computed[prop]
+        if (val !== undefined && val !== '') {
+          cloneEl.style[prop] = val
+        }
+      } catch (_) {
+        // ignore unsettable properties
       }
     })
-  }
+  })
 
-  resolveEl(originalRoot, clonedRoot)
-  originalEls.forEach((origEl, i) => resolveEl(origEl, clonedEls[i]))
+  // Remove ALL stylesheets so html2canvas never parses raw CSS rules
+  clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(n => n.remove())
 }
 
 export const downloadPdf = async (filename = 'resume') => {
@@ -86,7 +110,6 @@ export const downloadPdf = async (filename = 'resume') => {
     parent.style.height   = 'auto'
   }
 
-  // Capture the natural dimensions after removing the transform
   await new Promise(r => setTimeout(r, 200))
   const captureWidth  = el.scrollWidth
   const captureHeight = el.scrollHeight
@@ -103,13 +126,10 @@ export const downloadPdf = async (filename = 'resume') => {
       height:          captureHeight,
       windowWidth:     captureWidth,
       windowHeight:    captureHeight,
-      // Inline all computed colors onto the cloned DOM so html2canvas
-      // never has to parse oklch / color() / oklab values from stylesheets.
       onclone: (clonedDoc) => {
-        const clonedEl = clonedDoc.getElementById('resume-preview')
-        if (clonedEl) {
-          inlineComputedColors(el, clonedEl)
-        }
+        // Inline all computed styles and strip raw CSS rules so html2canvas
+        // never encounters oklch / lab / color() in stylesheet text.
+        prepareClone(el, clonedDoc)
       },
     })
 
