@@ -197,7 +197,17 @@ const ResumeBuilder = () => {
     else { navigator.clipboard?.writeText(url); toast.success('Link copied!') }
   }
 
-  const downloadResume = () => window.print()
+  const downloadResume = () => {
+    const title = resumeData.title || 'resume'
+    toast.promise(
+      import('../utils/downloadPdf.js').then(m => m.downloadPdf(title)),
+      {
+        loading: 'Generating PDF…',
+        success: 'PDF downloaded!',
+        error:   'Failed to generate PDF. Please try again.',
+      }
+    )
+  }
 
   // ── Section order helpers ────────────────────────────────────────────────
   const sectionOrder = resumeData.section_order?.length ? resumeData.section_order : DEFAULT_SECTION_ORDER

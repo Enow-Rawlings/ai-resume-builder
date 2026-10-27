@@ -22,7 +22,10 @@ const Preview = () => {
 
   useEffect(() => { loadResume() }, [])
 
-  const downloadResume = () => window.print()
+  const downloadResume = () => {
+    const filename = resumeData?.personal_info?.full_name || resumeData?.title || 'resume'
+    import('../utils/downloadPdf.js').then(m => m.downloadPdf(filename))
+  }
 
   // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
