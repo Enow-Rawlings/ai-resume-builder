@@ -199,14 +199,17 @@ const ResumeBuilder = () => {
 
   const downloadResume = () => {
     const title = resumeData.title || 'resume'
-    toast.promise(
-      import('../utils/downloadPdf.js').then(m => m.downloadPdf(title)),
-      {
-        loading: 'Generating PDF…',
-        success: 'PDF downloaded!',
-        error:   'Failed to generate PDF. Please try again.',
-      }
-    )
+    const promise = import('../utils/downloadPdf.js')
+      .then(m => m.downloadPdf(title))
+      .catch(err => {
+        console.error('PDF download error:', err)
+        throw err
+      })
+    toast.promise(promise, {
+      loading: 'Generating PDF…',
+      success: 'PDF downloaded!',
+      error:   (err) => `Download failed: ${err?.message || 'Please try again.'}`,
+    })
   }
 
   // ── Section order helpers ────────────────────────────────────────────────

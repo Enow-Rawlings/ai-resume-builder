@@ -1,114 +1,105 @@
 /**
  * downloadPdf(filename)
- *
- * Renders the #resume-preview element to a PDF using html2canvas + jsPDF.
- * Works regardless of browser print restrictions, COOP headers, or transform scaling.
- *
- * Steps:
- *  1. Find #resume-preview and temporarily reset its CSS transform so html2canvas
- *     captures the full-size content (not the scaled-down preview version).
- *  2. Render to canvas at 2× device pixel ratio for crisp PDF output.
- *  3. Fit the canvas onto A4/letter pages and save as PDF.
- *  4. Restore the original transform.
+ * Renders #resume-preview to a PDF using html2canvas + jsPDF.
  */
 export const downloadPdf = async (filename = 'resume') => {
   const el = document.getElementById('resume-preview')
-  if (!el) {
-    console.error('downloadPdf: #resume-preview element not found')
-    return
-  }
+  if (!el) throw new Error('#resume-preview element not found')
 
-  // Dynamically import so the libraries are code-split and not in the main bundle
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+  // ── Dynamic import (code-split — only loaded when user clicks Download) ──
+  // jsPDF v4 uses named exports; html2canvas uses default export
+  const [html2canvasMod, jspdfMod] = await Promise.all([
     import('html2canvas'),
     import('jspdf'),
   ])
+  const html2canvas = html2canvasMod.default
+  // jsPDF v4 exports { jsPDF } as a named export
+  const jsPDF = jspdfMod.jsPDF ?? jspdfMod.default?.jsPDF ?? jspdfMod.default
 
-  // ── 1. Temporarily reset transform so we capture at natural size ──
-  const prevTransform      = el.style.transform
-  const prevWidth          = el.style.width
+  if (typeof jsPDF !== 'function') {
+    throw new Error(`Could not resolve jsPDF constructor. Keys: ${Object.keys(jspdfMod).join(', ')}`)
+  }
+
+  // ── 1. Temporarily strip the scale transform so html2canvas captures full size ──
+  const prevTransform       = el.style.transform
+  const prevWidth           = el.style.width
   const prevTransformOrigin = el.style.transformOrigin
 
-  el.style.transform       = 'none'
-  el.style.width           = '100%'
-  el.style.transformOrigin = 'top left'
+  el.style.transform        = 'none'
+  el.style.width            = `${el.scrollWidth}px`
+  el.style.transformOrigin  = 'top left'
 
-  // Also un-clip the parent overflow so nothing is cropped
-  const parent = el.parentElement
-  const prevOverflow = parent ? parent.style.overflow : ''
-  const prevHeight   = parent ? parent.style.height   : ''
+  const parent      = el.parentElement
+  const prevOverflow = parent?.style.overflow ?? ''
+  const prevHeight   = parent?.style.height   ?? ''
   if (parent) {
     parent.style.overflow = 'visible'
     parent.style.height   = 'auto'
   }
 
+  // Small delay so the browser repaints at the new size before we capture
+  await new Promise(r => setTimeout(r, 150))
+
   try {
-    // ── 2. Render to canvas ──────────────────────────────────────────
+    // ── 2. Capture canvas ──────────────────────────────────────────────────
     const canvas = await html2canvas(el, {
-      scale: 2,               // 2× for retina-quality output
-      useCORS: true,          // allow cross-origin images (profile photos)
-      allowTaint: false,
+      scale:           2,
+      useCORS:         true,
+      allowTaint:      false,
       backgroundColor: '#ffffff',
-      logging: false,
-      // Capture the full scroll height, not just the visible portion
-      windowWidth:  el.scrollWidth,
-      windowHeight: el.scrollHeight,
+      logging:         false,
+      width:           el.scrollWidth,
+      height:          el.scrollHeight,
+      windowWidth:     el.scrollWidth,
+      windowHeight:    el.scrollHeight,
     })
 
-    // ── 3. Build PDF ─────────────────────────────────────────────────
-    const imgData  = canvas.toDataURL('image/png')
-    const imgWidth = canvas.width
+    const imgData   = canvas.toDataURL('image/jpeg', 0.95)  // JPEG is smaller than PNG
+    const imgWidth  = canvas.width
     const imgHeight = canvas.height
 
-    // A4 in mm: 210 × 297  |  Letter in mm: 215.9 × 279.4
-    // We'll use A4 portrait as the standard
-    const pdfWidth  = 210   // mm
-    const pdfHeight = 297   // mm
+    // ── 3. Build A4 PDF ────────────────────────────────────────────────────
+    // A4: 210mm × 297mm
+    const PDF_W = 210
+    const PDF_H = 297
 
-    // Scale to fit full width on one page, then paginate the height
-    const ratio       = pdfWidth / imgWidth
-    const scaledHeight = imgHeight * ratio  // rendered height in mm
+    const ratio         = PDF_W / imgWidth          // mm per canvas pixel
+    const contentHeight = imgHeight * ratio         // total content height in mm
 
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    })
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-    if (scaledHeight <= pdfHeight) {
-      // Fits on a single page
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, scaledHeight)
+    if (contentHeight <= PDF_H) {
+      // Single page
+      pdf.addImage(imgData, 'JPEG', 0, 0, PDF_W, contentHeight)
     } else {
-      // Multi-page: slice canvas height into A4-sized segments
-      const pageHeightPx = pdfHeight / ratio   // height of one page in canvas pixels
-      let   yOffset      = 0
+      // Multi-page: slice and render each page
+      const pagePixels = Math.floor(PDF_H / ratio)  // canvas pixels per page
+      let   yPx        = 0
 
-      while (yOffset < imgHeight) {
-        const sliceHeight = Math.min(pageHeightPx, imgHeight - yOffset)
+      while (yPx < imgHeight) {
+        const slicePx = Math.min(pagePixels, imgHeight - yPx)
 
-        // Create a temporary canvas for this page slice
-        const pageCanvas = document.createElement('canvas')
+        const pageCanvas  = document.createElement('canvas')
         pageCanvas.width  = imgWidth
-        pageCanvas.height = sliceHeight
+        pageCanvas.height = slicePx
         const ctx = pageCanvas.getContext('2d')
-        ctx.drawImage(canvas, 0, -yOffset)
+        ctx.drawImage(canvas, 0, -yPx)
 
-        const pageImgData    = pageCanvas.toDataURL('image/png')
-        const pageHeightMm   = sliceHeight * ratio
+        const sliceMm = slicePx * ratio
+        if (yPx > 0) pdf.addPage()
+        pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PDF_W, sliceMm)
 
-        if (yOffset > 0) pdf.addPage()
-        pdf.addImage(pageImgData, 'PNG', 0, 0, pdfWidth, pageHeightMm)
-
-        yOffset += sliceHeight
+        yPx += slicePx
       }
     }
 
     pdf.save(`${filename}.pdf`)
+
   } finally {
-    // ── 4. Always restore original styles ───────────────────────────
-    el.style.transform       = prevTransform
-    el.style.width           = prevWidth
-    el.style.transformOrigin = prevTransformOrigin
+    // ── 4. Always restore original styles ─────────────────────────────────
+    el.style.transform        = prevTransform
+    el.style.width            = prevWidth
+    el.style.transformOrigin  = prevTransformOrigin
     if (parent) {
       parent.style.overflow = prevOverflow
       parent.style.height   = prevHeight
