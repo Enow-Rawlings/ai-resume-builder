@@ -1,88 +1,18 @@
 /**
  * downloadPdf(filename)
- * Renders #resume-preview to a PDF using html2canvas + jsPDF.
+ * Renders #resume-preview to a PDF using html2canvas-pro + jsPDF.
  *
- * html2canvas v1 throws on modern CSS color functions (oklch, lab, color(), etc.)
- * used by Tailwind v4. Strategy:
- *   1. In the onclone hook, walk every element and inline ALL computed styles
- *      as explicit values (getComputedStyle gives us resolved rgb() values).
- *   2. Remove every <style> and <link rel="stylesheet"> from the cloned document
- *      so html2canvas never even tries to parse the raw Tailwind CSS rules.
- * After this, html2canvas only sees plain inline styles — no color functions.
+ * html2canvas-pro is a maintained fork of html2canvas that supports modern
+ * CSS color functions (oklch, oklab, lab, color(), color-mix()) used by
+ * Tailwind v4 — no color-scrubbing workarounds needed.
  */
-
-// All CSS properties we need to inline so layout + paint look correct
-const ALL_STYLE_PROPS = [
-  // Colors
-  'color', 'backgroundColor',
-  'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-  'outlineColor', 'textDecorationColor', 'fill', 'stroke',
-  // Box model
-  'display', 'position', 'top', 'right', 'bottom', 'left',
-  'width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight',
-  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
-  'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-  'boxSizing',
-  // Border
-  'borderWidth', 'borderStyle',
-  'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
-  'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
-  'borderRadius',
-  'borderTopLeftRadius', 'borderTopRightRadius',
-  'borderBottomLeftRadius', 'borderBottomRightRadius',
-  // Flexbox / Grid
-  'flexDirection', 'flexWrap', 'justifyContent', 'alignItems', 'alignSelf',
-  'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'gap', 'rowGap', 'columnGap',
-  'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
-  // Typography
-  'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight',
-  'letterSpacing', 'textAlign', 'textTransform', 'textDecoration',
-  'whiteSpace', 'wordBreak', 'overflowWrap',
-  // Visual
-  'opacity', 'overflow', 'overflowX', 'overflowY',
-  'boxShadow', 'textShadow',
-  'backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat',
-  'objectFit', 'objectPosition',
-  'verticalAlign', 'listStyleType',
-  'zIndex', 'visibility',
-]
-
-/**
- * Inline all computed styles onto every cloned element, then strip all
- * stylesheets from the cloned document. html2canvas will only see the
- * inlined values — no raw CSS rules with unsupported color functions.
- */
-const prepareClone = (originalRoot, clonedDoc) => {
-  const originalEls = [originalRoot, ...originalRoot.querySelectorAll('*')]
-  const clonedRoot  = clonedDoc.getElementById(originalRoot.id)
-  const clonedEls   = clonedRoot ? [clonedRoot, ...clonedRoot.querySelectorAll('*')] : []
-
-  originalEls.forEach((origEl, i) => {
-    const cloneEl = clonedEls[i]
-    if (!cloneEl) return
-    const computed = window.getComputedStyle(origEl)
-    ALL_STYLE_PROPS.forEach(prop => {
-      try {
-        const val = computed[prop]
-        if (val !== undefined && val !== '') {
-          cloneEl.style[prop] = val
-        }
-      } catch (_) {
-        // ignore unsettable properties
-      }
-    })
-  })
-
-  // Remove ALL stylesheets so html2canvas never parses raw CSS rules
-  clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(n => n.remove())
-}
 
 export const downloadPdf = async (filename = 'resume') => {
   const el = document.getElementById('resume-preview')
   if (!el) throw new Error('#resume-preview element not found')
 
   const [html2canvasMod, jspdfMod] = await Promise.all([
-    import('html2canvas'),
+    import('html2canvas-pro'),
     import('jspdf'),
   ])
 
@@ -126,11 +56,6 @@ export const downloadPdf = async (filename = 'resume') => {
       height:          captureHeight,
       windowWidth:     captureWidth,
       windowHeight:    captureHeight,
-      onclone: (clonedDoc) => {
-        // Inline all computed styles and strip raw CSS rules so html2canvas
-        // never encounters oklch / lab / color() in stylesheet text.
-        prepareClone(el, clonedDoc)
-      },
     })
 
     // ── 3. Build A4 PDF ──────────────────────────────────────────────
@@ -149,6 +74,7 @@ export const downloadPdf = async (filename = 'resume') => {
     if (contentHeight <= PDF_H) {
       pdf.addImage(imgData, 'JPEG', 0, 0, PDF_W, contentHeight)
     } else {
+      // Resume taller than one A4 page — slice into pages
       const pagePixels = Math.floor(PDF_H / ratio)
       let yPx = 0
 
