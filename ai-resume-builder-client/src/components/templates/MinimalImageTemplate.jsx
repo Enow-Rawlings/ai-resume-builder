@@ -29,10 +29,9 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
   const renderSidebar = (key) => {
     switch (key) {
       case 'skills': {
-        const sc = data.skills_categorized
-        const hasCats = sc && (sc.core?.length > 0 || sc.technical?.length > 0 || sc.soft?.length > 0)
+        const cats = Array.isArray(data.skills_categorized) ? data.skills_categorized.filter(c => c.skills?.length > 0) : []
         const flatSkills = data.skills || []
-        if (!hasCats && flatSkills.length === 0) return null
+        if (cats.length === 0 && flatSkills.length === 0) return null
         const Bullet = ({ s }) => (
           <span className="text-xs py-0.5 flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />{s}
@@ -41,26 +40,14 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
         return (
           <div key="skills" className="mb-5">
             <SH>Skills</SH>
-            {hasCats ? (
+            {cats.length > 0 ? (
               <div className="space-y-2">
-                {sc.core?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Core</p>
-                    <div className="flex flex-col gap-0.5">{sc.core.map((s, i) => <Bullet key={i} s={s} />)}</div>
+                {cats.map((cat, ci) => (
+                  <div key={ci}>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">{cat.name}</p>
+                    <div className="flex flex-col gap-0.5">{cat.skills.map((s, i) => <Bullet key={i} s={s} />)}</div>
                   </div>
-                )}
-                {sc.technical?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Technical</p>
-                    <div className="flex flex-col gap-0.5">{sc.technical.map((s, i) => <Bullet key={i} s={s} />)}</div>
-                  </div>
-                )}
-                {sc.soft?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Soft</p>
-                    <div className="flex flex-col gap-0.5">{sc.soft.map((s, i) => <Bullet key={i} s={s} />)}</div>
-                  </div>
-                )}
+                ))}
               </div>
             ) : (
               <div className="flex flex-col gap-0.5">{flatSkills.map((s, i) => <Bullet key={i} s={s} />)}</div>

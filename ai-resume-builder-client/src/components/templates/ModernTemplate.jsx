@@ -83,36 +83,23 @@ const ModernTemplate = ({ data, accentColor }) => {
         ) : null
 
       case 'skills': {
-        const sc = data.skills_categorized
-        const hasCats = sc && (sc.core?.length > 0 || sc.technical?.length > 0 || sc.soft?.length > 0)
+        const cats = Array.isArray(data.skills_categorized) ? data.skills_categorized.filter(c => c.skills?.length > 0) : []
         const flatSkills = data.skills || []
-        if (!hasCats && flatSkills.length === 0) return null
+        if (cats.length === 0 && flatSkills.length === 0) return null
         const Pill = ({ s }) => (
           <span className="px-3 py-1 text-sm text-white rounded-full" style={{ backgroundColor: accentColor }}>{s}</span>
         )
         return (
           <section key="skills" className="mb-7">
             <H>Skills</H>
-            {hasCats ? (
+            {cats.length > 0 ? (
               <div className="space-y-3">
-                {sc.core?.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Core</p>
-                    <div className="flex flex-wrap gap-2">{sc.core.map((s, i) => <Pill key={i} s={s} />)}</div>
+                {cats.map((cat, ci) => (
+                  <div key={ci}>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">{cat.name}</p>
+                    <div className="flex flex-wrap gap-2">{cat.skills.map((s, i) => <Pill key={i} s={s} />)}</div>
                   </div>
-                )}
-                {sc.technical?.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Technical</p>
-                    <div className="flex flex-wrap gap-2">{sc.technical.map((s, i) => <Pill key={i} s={s} />)}</div>
-                  </div>
-                )}
-                {sc.soft?.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Soft</p>
-                    <div className="flex flex-wrap gap-2">{sc.soft.map((s, i) => <Pill key={i} s={s} />)}</div>
-                  </div>
-                )}
+                ))}
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">{flatSkills.map((s, i) => <Pill key={i} s={s} />)}</div>

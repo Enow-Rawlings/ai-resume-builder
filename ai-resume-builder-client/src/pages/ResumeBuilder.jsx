@@ -64,7 +64,7 @@ const INITIAL_DATA = {
   personal_info: {},
   professional_summary: '',
   experience: [], education: [], project: [], skills: [],
-  skills_categorized: { core: [], technical: [], soft: [] },
+  skills_categorized: [],
   languages: [], references: [], professional_bodies: [],
   section_order: DEFAULT_SECTION_ORDER,
   template: 'classic',
@@ -100,25 +100,22 @@ const ResumeBuilder = () => {
         if (!Array.isArray(resume.section_order) || resume.section_order.length === 0) {
           resume.section_order = DEFAULT_SECTION_ORDER
         }
-        // Back-fill skills_categorized for older resumes that only have flat skills.
-        // Existing flat skills migrate into "core" so nothing is lost.
-        const hasCategorized = resume.skills_categorized &&
-          (resume.skills_categorized.core?.length > 0 ||
-           resume.skills_categorized.technical?.length > 0 ||
-           resume.skills_categorized.soft?.length > 0)
-        if (!hasCategorized) {
-          resume.skills_categorized = {
-            core: Array.isArray(resume.skills) ? [...resume.skills] : [],
-            technical: [],
-            soft: [],
-          }
+        // Migrate skills_categorized to the new Array<{name,skills}> shape.
+        const sc = resume.skills_categorized
+        if (Array.isArray(sc)) {
+          // Already new shape — keep as-is (empty array is valid)
+          resume.skills_categorized = sc
+        } else if (sc && typeof sc === 'object') {
+          // Old shape: { core, technical, soft } — convert to named categories
+          const out = []
+          if (Array.isArray(sc.core)      && sc.core.length)      out.push({ name: 'Core Skills',      skills: sc.core })
+          if (Array.isArray(sc.technical) && sc.technical.length) out.push({ name: 'Technical Skills', skills: sc.technical })
+          if (Array.isArray(sc.soft)      && sc.soft.length)      out.push({ name: 'Soft Skills',      skills: sc.soft })
+          resume.skills_categorized = out
         } else {
-          // Ensure all three keys exist even if the DB doc is missing some
-          resume.skills_categorized = {
-            core:      Array.isArray(resume.skills_categorized.core)      ? resume.skills_categorized.core      : [],
-            technical: Array.isArray(resume.skills_categorized.technical) ? resume.skills_categorized.technical : [],
-            soft:      Array.isArray(resume.skills_categorized.soft)      ? resume.skills_categorized.soft      : [],
-          }
+          // No categorized skills at all — migrate flat skills into one category
+          const flat = Array.isArray(resume.skills) ? resume.skills : []
+          resume.skills_categorized = flat.length ? [{ name: 'Core Skills', skills: flat }] : []
         }
         setResumeData(resume)
         document.title = resume.title
@@ -137,13 +134,9 @@ const ResumeBuilder = () => {
       delete payload.personal_info.image
     }
 
-    // Keep flat skills in sync — merge all categories so templates keep working
-    const sc = payload.skills_categorized || { core: [], technical: [], soft: [] }
-    payload.skills = [
-      ...(sc.core      || []),
-      ...(sc.technical || []),
-      ...(sc.soft      || []),
-    ]
+    // Keep flat skills in sync — flatten all categories so older code still works
+    const sc = Array.isArray(payload.skills_categorized) ? payload.skills_categorized : []
+    payload.skills = sc.flatMap(cat => Array.isArray(cat.skills) ? cat.skills : [])
 
     const useFormData = typeof resumeData.personal_info.image === 'object' || removeBackground
 
