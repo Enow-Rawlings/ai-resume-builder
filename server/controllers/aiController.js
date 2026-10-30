@@ -1,10 +1,11 @@
 import Resume from '../models/Resume.js'
 import ai from '../configs/ai.js'
 
-// Model preference order — first available on the account will be used.
-// llama-4-scout has the highest free-tier TPM (30k) and TPD (500k).
+// Free-tier models confirmed available on Groq (October 2026).
+// llama-4-scout was removed from free tier June 2026.
+// Primary: openai/gpt-oss-20b — fastest (1000 TPS), good instruction following, free tier.
 const MODEL_FALLBACKS = [
-  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'openai/gpt-oss-20b',
   'llama-3.3-70b-versatile',
   'llama-3.1-8b-instant',
 ]
